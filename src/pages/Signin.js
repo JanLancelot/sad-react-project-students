@@ -18,19 +18,32 @@ const signInUser = async (email, password, navigate) => {
     const errorCode = error.code;
     const errorMessage = error.message;
     console.error("Error:", errorCode, errorMessage);
+    return errorMessage; // Return error message for display
   }
 };
 
 export default function Signin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     console.log("Submitting form");
-    await signInUser(email, password, navigate);
+
+    // Check if email or password is empty
+    if (!email || !password) {
+      setError("Email and password are required");
+      return;
+    }
+
+    const errorMessage = await signInUser(email, password, navigate);
+    if (errorMessage) {
+      setError("Incorrect email or password. Please try again.");
+    }
   };
+
   return (
     <>
       <div className="h-screen flex items-center justify-center">
@@ -68,11 +81,14 @@ export default function Signin() {
                       type="email"
                       autoComplete="email"
                       required
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ${
+                        error ? "ring-red-500" : "ring-gray-300"
+                      } placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6`}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
+                  {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
                 </div>
 
                 <div>
@@ -89,7 +105,9 @@ export default function Signin() {
                       type="password"
                       autoComplete="current-password"
                       required
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ${
+                        error ? "ring-red-500" : "ring-gray-300"
+                      } placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6`}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
@@ -133,7 +151,7 @@ export default function Signin() {
                 <p className="mt-10 text-center text-sm text-gray-500">
                   Not registered?{" "}
                   <a
-                    href="#"
+                    href="/signup"
                     className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
                   >
                     Sign-up
