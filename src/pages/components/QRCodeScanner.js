@@ -1,11 +1,12 @@
-import React, { useState, useRef } from 'react';
-import QrScanner from 'react-qr-scanner';
+import React, { useState, useRef, useEffect } from 'react';
+import QrScanner, { UserMediaRequestError } from 'react-qr-scanner';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 
 const QRScanner = () => {
   const [scanResult, setScanResult] = useState(null);
   const [isScannerActive, setIsScannerActive] = useState(false);
+  const [cameraId, setCameraId] = useState(null);
   const qrRef = useRef(null);
 
   const handleScan = async (result) => {
@@ -48,16 +49,38 @@ const QRScanner = () => {
     setIsScannerActive(!isScannerActive);
   };
 
-  const previewStyle = { height: 'auto', maxWidth: '100%' };
-  const chooseDeviceId = (deviceIds) => {
-    const backCameraId = deviceIds.find(deviceId => deviceId.kind === 'videoinput' && /back/i.test(deviceId.label));
-    return backCameraId ? backCameraId.deviceId : undefined;
+  const selectBackCamera = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      console.log(devices);
+      const backCamera = devices.find(
+        (device) => device.kind === 'videoinput' && /back/i.test(device.label)
+      );
+
+      if (backCamera) {
+        setCameraId(backCamera.deviceId);
+      } else {
+        console.error('No back camera found');
+      }
+    } catch (err) {
+      console.error('Error selecting back camera:', err);
+    }
   };
+
+  const previewStyle = { height: 'auto', maxWidth: '100%' };
+
+  useEffect(() => {
+    const selectCamera = async () => {
+      await selectBackCamera();
+      setIsScannerActive(true);
+    };
+
+    selectCamera();
+  }, []);
 
   return (
     <div className="container mx-auto p-8 flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-4">QR Code Scanner</h1>
-
       {isScannerActive && (
         <div className="border border-gray-400 rounded-md shadow-md p-4">
           <QrScanner
@@ -66,21 +89,17 @@ const QRScanner = () => {
             style={previewStyle}
             onError={handleError}
             onScan={handleScan}
-            chooseDeviceId={chooseDeviceId}
+            deviceId={cameraId}
           />
         </div>
       )}
-
       <button
         className="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded"
         onClick={toggleScanner}
       >
         {isScannerActive ? 'Stop Scanner' : 'Start Scanner'}
       </button>
-
-      {scanResult && (
-        <p className="mt-4 text-center">Scanned Result: {scanResult}</p>
-      )}
+      {scanResult && <p className="mt-4 text-center">Scanned Result: {scanResult}</p>}
     </div>
   );
 };
