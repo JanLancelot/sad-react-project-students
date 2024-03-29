@@ -48,7 +48,7 @@ const QRScanner = () => {
   const toggleScanner = () => {
     setIsScannerActive(!isScannerActive);
   };
-  let devarr = [];
+  let devarr = "";
 
   const selectBackCamera = async () => {
     try {
