@@ -93,10 +93,6 @@ const QRScanner = () => {
             style={previewStyle}
             onError={handleError}
             onScan={handleScan}
-            constraints={{
-              facingMode: "user",
-            }}
-            key="user"
           />
         </div>
       )}
