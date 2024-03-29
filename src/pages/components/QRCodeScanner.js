@@ -49,8 +49,9 @@ const QRScanner = () => {
   };
 
   const previewStyle = { height: 'auto', maxWidth: '100%' };
-  const findBackCameraId = (deviceIds) => {
-    return deviceIds.find(deviceId => /back/i.test(deviceId.label));
+  const chooseDeviceId = (deviceIds) => {
+    const backCameraId = deviceIds.find(deviceId => deviceId.kind === 'videoinput' && /back/i.test(deviceId.label));
+    return backCameraId ? backCameraId.deviceId : undefined;
   };
 
   return (
@@ -65,7 +66,7 @@ const QRScanner = () => {
             style={previewStyle}
             onError={handleError}
             onScan={handleScan}
-            chooseDeviceId={findBackCameraId}
+            chooseDeviceId={chooseDeviceId}
           />
         </div>
       )}
