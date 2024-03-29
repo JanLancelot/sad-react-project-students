@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import QrScanner, { UserMediaRequestError } from "react-qr-scanner";
+import QrScanner, {
+  UserMediaRequestError,
+  setQrByScan,
+} from "react-qr-scanner";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
@@ -91,8 +94,12 @@ const QRScanner = () => {
             ref={qrRef}
             delay={300}
             style={previewStyle}
-            onError={handleError}
-            onScan={handleScan}
+            constraints={{
+              aspectRatio: 1,
+              facingMode: { ideal: "environment" },
+            }}
+            onDecode={(result) => setQrByScan(result)}
+            onError={(error) => console.log(error?.message)}
           />
         </div>
       )}
