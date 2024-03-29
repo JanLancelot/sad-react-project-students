@@ -94,9 +94,9 @@ const QRScanner = () => {
             onError={handleError}
             onScan={handleScan}
             constraints={{
-              facingMode: "environment",
+              facingMode: "user",
             }}
-            key="environment"
+            key="user"
           />
         </div>
       )}
