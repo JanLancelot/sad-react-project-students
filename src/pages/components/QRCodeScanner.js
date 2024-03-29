@@ -96,7 +96,6 @@ const QRScanner = () => {
             style={previewStyle}
             onScan={handleScan}
             constraints={{
-              audio: true,
               video: { facingMode: "environment" },
             }}
           />
