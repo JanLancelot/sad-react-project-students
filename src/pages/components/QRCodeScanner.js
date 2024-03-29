@@ -94,12 +94,11 @@ const QRScanner = () => {
             ref={qrRef}
             delay={300}
             style={previewStyle}
+            onScan={handleScan}
             constraints={{
-              aspectRatio: 1,
-              facingMode: { ideal: "environment" },
+              audio: true,
+              video: { facingMode: "environment" },
             }}
-            onDecode={(result) => setQrByScan(result)}
-            onError={(error) => console.log(error?.message)}
           />
         </div>
       )}
