@@ -28,7 +28,7 @@ const QRScanner = () => {
 
           const meetingDoc = await getDoc(meetingDocRef);
           if (meetingDoc.exists()) {
-            const eventNameFromDoc = meetingDoc.data().eventName;
+            const eventNameFromDoc = meetingDoc.data().name;
             setEventName(eventNameFromDoc);
           } else {
             console.error("Meeting document does not exist");
