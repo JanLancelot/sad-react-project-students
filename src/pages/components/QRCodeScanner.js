@@ -54,6 +54,7 @@ const QRScanner = () => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       devarr = devices;
+      console.log(devarr);
       const backCamera = devices.find(
         (device) => device.kind === 'videoinput' && /back/i.test(device.label)
       );
