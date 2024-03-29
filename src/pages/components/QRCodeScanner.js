@@ -48,11 +48,12 @@ const QRScanner = () => {
   const toggleScanner = () => {
     setIsScannerActive(!isScannerActive);
   };
+  let devarr = [];
 
   const selectBackCamera = async () => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
-      console.log(devices);
+      devarr = devices;
       const backCamera = devices.find(
         (device) => device.kind === 'videoinput' && /back/i.test(device.label)
       );
@@ -99,6 +100,7 @@ const QRScanner = () => {
       >
         {isScannerActive ? 'Stop Scanner' : 'Start Scanner'}
       </button>
+      <p>Devices: {devarr}</p>
       {scanResult && <p className="mt-4 text-center">Scanned Result: {scanResult}</p>}
     </div>
   );
