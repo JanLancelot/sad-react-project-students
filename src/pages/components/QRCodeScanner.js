@@ -3,12 +3,13 @@ import QrScanner, {
   UserMediaRequestError,
   setQrByScan,
 } from "react-qr-scanner";
-import { doc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, updateDoc, getDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
 const QRScanner = () => {
   const [scanResult, setScanResult] = useState(null);
   const [isScannerActive, setIsScannerActive] = useState(false);
+   const [eventName, setEventName] = useState(null);
   const [cameraId, setCameraId] = useState(null);
   const qrRef = useRef(null);
 
@@ -24,6 +25,14 @@ const QRScanner = () => {
         try {
           // Update the attendees array in the meetings collection
           const meetingDocRef = doc(db, "meetings", result.text);
+
+          const meetingDoc = await getDoc(meetingDocRef);
+          if (meetingDoc.exists()) {
+            const eventNameFromDoc = meetingDoc.data().eventName;
+            setEventName(eventNameFromDoc);
+          } else {
+            console.error("Meeting document does not exist");
+          }
           await updateDoc(meetingDocRef, {
             attendees: arrayUnion(userUid),
           });
@@ -107,10 +116,7 @@ const QRScanner = () => {
       >
         {isScannerActive ? "Stop Scanner" : "Start Scanner"}
       </button>
-      <p>Devices: {devarr}</p>
-      {scanResult && (
-        <p className="mt-4 text-center">Scanned Result: {scanResult}</p>
-      )}
+      {eventName && <p className="mt-4 text-center">Event Name: {eventName}</p>}
     </div>
   );
 };
