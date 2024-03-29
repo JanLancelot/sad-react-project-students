@@ -1,7 +1,7 @@
-import React, { useState, useRef } from "react";
-import QrScanner from "react-qr-scanner";
-import { doc, updateDoc, arrayUnion } from "firebase/firestore";
-import { auth, db } from "../../firebase";
+import React, { useState, useRef } from 'react';
+import QrScanner from 'react-qr-scanner';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { auth, db } from '../../firebase';
 
 const QRScanner = () => {
   const [scanResult, setScanResult] = useState(null);
@@ -19,25 +19,23 @@ const QRScanner = () => {
 
         try {
           // Update the attendees array in the meetings collection
-          const meetingDocRef = doc(db, "meetings", result.text);
+          const meetingDocRef = doc(db, 'meetings', result.text);
           await updateDoc(meetingDocRef, {
             attendees: arrayUnion(userUid),
           });
 
           // Update the eventsAttended array in the users collection
-          const userDocRef = doc(db, "users", userUid);
+          const userDocRef = doc(db, 'users', userUid);
           await updateDoc(userDocRef, {
             eventsAttended: arrayUnion(result.text),
           });
 
-          console.log(
-            "Attendees array and eventsAttended array updated successfully."
-          );
+          console.log('Attendees array and eventsAttended array updated successfully.');
         } catch (error) {
-          console.error("Error updating arrays:", error);
+          console.error('Error updating arrays:', error);
         }
       } else {
-        console.error("No user is currently authenticated.");
+        console.error('No user is currently authenticated.');
       }
     }
   };
@@ -50,7 +48,10 @@ const QRScanner = () => {
     setIsScannerActive(!isScannerActive);
   };
 
-  const previewStyle = { height: "auto", maxWidth: "100%" };
+  const previewStyle = { height: 'auto', maxWidth: '100%' };
+  const findBackCameraId = (deviceIds) => {
+    return deviceIds.find(deviceId => /back/i.test(deviceId.label));
+  };
 
   return (
     <div className="container mx-auto p-8 flex flex-col items-center">
@@ -64,9 +65,7 @@ const QRScanner = () => {
             style={previewStyle}
             onError={handleError}
             onScan={handleScan}
-            constraints={{
-              facingMode: "environment", // Attempt to use back camera
-            }}
+            chooseDeviceId={findBackCameraId}
           />
         </div>
       )}
@@ -75,7 +74,7 @@ const QRScanner = () => {
         className="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded"
         onClick={toggleScanner}
       >
-        {isScannerActive ? "Stop Scanner" : "Start Scanner"}
+        {isScannerActive ? 'Stop Scanner' : 'Start Scanner'}
       </button>
 
       {scanResult && (
