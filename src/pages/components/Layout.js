@@ -115,11 +115,10 @@ export default function Layout({ children }) {
   };
 
   const userNavigation = [
-    { name: "Your profile", href: "#" },
+    { name: "Your profile", href: "/profile" },
     { name: "Sign out", href: "#", onClick: handleSignOut },
   ];
   
-
   return (
     <>
       <div>

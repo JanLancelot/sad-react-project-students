@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider, Link, Navigate } from "react-route
 import Signin from "./pages/Signin";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 
 import './App.css';
 
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
   {
     path: '/dashboard',
     element: <Dashboard/>
+  },
+  {
+    path: '/profile',
+    element: <Profile/>
   }
 ])
 

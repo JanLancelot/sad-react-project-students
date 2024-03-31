@@ -11,6 +11,7 @@
     "firebase": "^10.9.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-firebase-hooks": "^5.1.1",
     "react-qr-scanner": "^1.0.0-alpha.11",
     "react-qrcode-scanner": "^1.1.7",
     "react-router-dom": "^6.22.3",
