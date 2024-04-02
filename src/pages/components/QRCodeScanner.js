@@ -17,13 +17,11 @@ const QRScanner = () => {
     if (result) {
       setScanResult(result.text);
 
-      // Get the current authenticated user's UID
       const currentUser = auth.currentUser;
       if (currentUser) {
         const userUid = currentUser.uid;
 
         try {
-          // Update the attendees array in the meetings collection
           const meetingDocRef = doc(db, "meetings", result.text);
 
           const meetingDoc = await getDoc(meetingDocRef);
@@ -37,7 +35,6 @@ const QRScanner = () => {
             attendees: arrayUnion(userUid),
           });
 
-          // Update the eventsAttended array in the users collection
           const userDocRef = doc(db, "users", userUid);
           await updateDoc(userDocRef, {
             eventsAttended: arrayUnion(result.text),

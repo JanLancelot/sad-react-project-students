@@ -18,7 +18,7 @@ const signInUser = async (email, password, navigate) => {
     const errorCode = error.code;
     const errorMessage = error.message;
     console.error("Error:", errorCode, errorMessage);
-    return errorMessage; // Return error message for display
+    return errorMessage;
   }
 };
 

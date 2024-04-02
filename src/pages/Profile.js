@@ -27,7 +27,6 @@ export default function Profile() {
           const userData = userDocSnap.data();
           setFullName(userData.fullName);
 
-          // Fetch event names efficiently using a single query
           const eventsRef = collection(db, "meetings");
           const eventsQuery = query(
             eventsRef,
@@ -47,16 +46,14 @@ export default function Profile() {
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        // User is logged in, fetch data
         fetchUserData(user.uid);
       } else {
-        // User is not logged in, clear data
         setFullName(null);
         setEventsAttended([]);
       }
     });
 
-    return unsubscribe; // Cleanup function to unsubscribe from listener
+    return unsubscribe;
   }, [db]);
 
   return (

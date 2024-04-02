@@ -90,15 +90,12 @@ export default function Layout({ children }) {
             }
           });
   
-          // Clean up the snapshot listener when the user logs out or component unmounts
           return () => unsubscribeSnapshot();
         } else {
-          // Clear the names when the user logs out
           setFullName('');
         }
       });
   
-      // Clean up the auth state listener when the component unmounts
       return () => unsubscribeAuth();
     }, []);
 
@@ -108,7 +105,7 @@ export default function Layout({ children }) {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      navigate("/"); // Navigate to the '/' route after signing out
+      navigate("/");
     } catch (error) {
       console.log(error);
     }
