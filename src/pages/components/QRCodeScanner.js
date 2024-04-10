@@ -10,18 +10,21 @@ const QRScanner = () => {
   const [eventName, setEventName] = useState(null);
   const [cameraId, setCameraId] = useState(null);
   const [locationError, setLocationError] = useState(null);
+  const [distance, setDistance] = useState(null);
   const qrRef = useRef(null);
 
   const handleScan = async (result) => {
     if (result) {
       // Check if the user is in the allowed location
-      const isAllowedLocation = await isInAllowedLocation();
+      const { isAllowedLocation, distanceToLocation } = await isInAllowedLocation();
       if (!isAllowedLocation) {
         setLocationError("You are not in the allowed location to scan this QR code.");
+        setDistance(distanceToLocation);
         return;
       }
 
       setLocationError(null);
+      setDistance(null);
       setScanResult(result.text);
       const currentUser = auth.currentUser;
       if (currentUser) {
@@ -93,11 +96,11 @@ const QRScanner = () => {
   const isInAllowedLocation = async () => {
     try {
       const currentPosition = await getCurrentPosition();
-      // Add your logic to check if the user is in the allowed location(s)
-      // For example, check if the user is within a certain radius of a specific coordinate
       const allowedLocations = [
-        { latitude: 14.83092914435725, longitude: 120.88986445696194, radius: 1000 }, // San Francisco
+        { latitude: 14.828548034345223, longitude: 120.88693765663366, radius: 1000 }, // San Francisco
       ];
+      let isAllowedLocation = false;
+      let distanceToLocation = null;
       for (const location of allowedLocations) {
         const distance = calculateDistance(
           currentPosition.coords.latitude,
@@ -106,25 +109,27 @@ const QRScanner = () => {
           location.longitude
         );
         if (distance <= location.radius) {
-          return true;
+          isAllowedLocation = true;
+          distanceToLocation = distance;
+          break;
         }
       }
-      return false;
+      return { isAllowedLocation, distanceToLocation };
     } catch (error) {
       console.error("Error checking location:", error);
-      return false;
+      return { isAllowedLocation: false, distanceToLocation: null };
     }
   };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Radius of the earth in kilometers
+    const R = 6371000; // Radius of the earth in meters
     const dLat = deg2rad(lat2 - lat1);
     const dLon = deg2rad(lon2 - lon1);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in km
+    const distance = R * c; // Distance in meters
     return distance;
   };
 
@@ -160,6 +165,11 @@ const QRScanner = () => {
       {locationError && (
         <div className="mt-4 bg-red-500 text-white p-4 rounded">
           <p>{locationError}</p>
+          {distance !== null && (
+            <p>
+              Distance to allowed location: {distance.toFixed(2)} meters
+            </p>
+          )}
         </div>
       )}
     </div>
