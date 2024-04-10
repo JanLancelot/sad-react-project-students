@@ -10,6 +10,7 @@ const QRScanner = () => {
   const [eventName, setEventName] = useState(null);
   const [cameraId, setCameraId] = useState(null);
   const [locationError, setLocationError] = useState(null);
+  const [displayLocation, setDisplayLocation] = useState(null);
   const qrRef = useRef(null);
 
   const handleScan = async (result) => {
@@ -96,7 +97,7 @@ const QRScanner = () => {
       // Add your logic to check if the user is in the allowed location(s)
       // For example, check if the user is within a certain radius of a specific coordinate
       const allowedLocations = [
-        { latitude: 37.7749, longitude: -122.4194, radius: 1000 }, // San Francisco
+        { latitude: 14.830489100426364, longitude: 120.8890489656081, radius: 1}, // San Francisco
       ];
       for (const location of allowedLocations) {
         const distance = calculateDistance(
@@ -105,6 +106,7 @@ const QRScanner = () => {
           location.latitude,
           location.longitude
         );
+        setDisplayLocation(distance)
         if (distance <= location.radius) {
           return true;
         }
@@ -156,6 +158,7 @@ const QRScanner = () => {
       >
         {isScannerActive ? "Stop Scanner" : "Start Scanner"}
       </button>
+      {displayLocation}
       {eventName && <p className="mt-4 text-center">Event Name: {eventName}</p>}
       {locationError && (
         <div className="mt-4 bg-red-500 text-white p-4 rounded">
