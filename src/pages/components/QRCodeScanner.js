@@ -96,7 +96,7 @@ const QRScanner = () => {
       // Add your logic to check if the user is in the allowed location(s)
       // For example, check if the user is within a certain radius of a specific coordinate
       const allowedLocations = [
-        { latitude: 37.7749, longitude: -122.4194, radius: 1000 }, // San Francisco
+        { latitude: 14.802680232646233, longitude: 120.920832156558, radius: 1000 }, // San Francisco
       ];
       for (const location of allowedLocations) {
         const distance = calculateDistance(
