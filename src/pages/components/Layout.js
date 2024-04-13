@@ -28,23 +28,11 @@ const navigation = [
     current: window.location.pathname === "/",
   },
   {
-    name: "Students",
-    href: "/computer-studies",
-    icon: UsersIcon,
-    current: window.location.pathname === "/students",
-  },
-  {
     name: "Calendar",
     href: "/calendar",
     icon: CalendarIcon,
     current: window.location.pathname === "/calendar",
-  },
-  {
-    name: "Reports",
-    href: "/reports",
-    icon: ChartPieIcon,
-    current: window.location.pathname === "/reports",
-  },
+  }
 ];
 const teams = [
   { id: 1, name: "Heroicons", href: "#", initial: "H", current: false },
@@ -70,7 +58,8 @@ export default function Layout({ children }) {
     window.location.pathname !== "/health-sciences" &&
     window.location.pathname !== "/hospitality" &&
     window.location.pathname !== "/reports" &&
-    window.location.pathname !== "/dashboard";
+    window.location.pathname !== "/dashboard" &&
+    !window.location.pathname.startsWith("/events/");
 
     const [fullName, setFullName] = useState('');
   
