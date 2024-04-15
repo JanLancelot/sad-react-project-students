@@ -4,14 +4,14 @@ import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
 
 const departments = [
   { id: 0, name: 'Select Department', color: ''},
-  { id: 1, name: 'Computer Studies', color: 'bg-blue-400', dbl: 'ccs-department' },
-  { id: 2, name: 'Education', color: 'bg-green-400', dbl: 'education-department' },
-  { id: 3, name: 'Accountancy', color: 'bg-yellow-400', dbl: 'accounting-department' },
-  { id: 4, name: 'Business Administration', color: 'bg-purple-400', dbl: 'business-department' },
-  { id: 5, name: 'Arts and Sciences', color: 'bg-pink-400', dbl: 'arts-and-sciences-department' },
-  { id: 6, name: 'Maritime', color: 'bg-teal-400', dbl: 'maritime-department'},
-  { id: 7, name: 'Health Sciences', color: 'bg-red-400', dbl: 'health-sciences-department'},
-  { id: 8, name: 'Hospitality', color: 'bg-orange-400', dbl: 'hospitality-department' },
+  { id: 1, name: 'Computer Studies', color: 'bg-blue-400', dbl: 'CS department' },
+  { id: 2, name: 'Education', color: 'bg-green-400', dbl: 'Education Department' },
+  { id: 3, name: 'Accountancy', color: 'bg-yellow-400', dbl: 'Accountancy Department' },
+  { id: 4, name: 'Business Administration', color: 'bg-purple-400', dbl: 'Business Administration Department' },
+  { id: 5, name: 'Arts and Sciences', color: 'bg-pink-400', dbl: 'Arts and Sciences Department' },
+  { id: 6, name: 'Maritime', color: 'bg-teal-400', dbl: 'Maritime department'},
+  { id: 7, name: 'Health Sciences', color: 'bg-red-400', dbl: 'Health Sciences Department'},
+  { id: 8, name: 'Hospitality', color: 'bg-orange-400', dbl: 'Hospitality Management and Tourism Department' },
 ]
 
 function classNames(...classes) {

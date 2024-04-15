@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Calendar from "./pages/Calendar";
 import EventDetails from "./pages/EventDetails";
+import NotificationsPage from "./pages/NotificationsPage";
 import { AuthProvider } from '../src/context/AuthContext';
 import './App.css';
 
@@ -14,7 +15,8 @@ const router = createBrowserRouter([
   { path: '/dashboard', element: <Dashboard/> },
   { path: '/profile', element: <Profile/> },
   { path: '/calendar', element: <Calendar/> },
-  { path: '/events/:eventId', element: <EventDetails/> }
+  { path: '/events/:eventId', element: <EventDetails/> },
+  { path: '/notifications', element: <NotificationsPage/> }
 ]);
 
 function App() {

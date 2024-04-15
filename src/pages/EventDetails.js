@@ -6,10 +6,11 @@ import {
   PencilIcon,
   TrashIcon,
   UserPlusIcon,
+  UserMinusIcon,
   LinkIcon,
 } from "@heroicons/react/24/outline";
-import Layout from "./components/Layout";
 import { useAuth } from "../context/AuthContext";
+import Layout from "./components/Layout";
 
 export default function EventDetails() {
   const { eventId } = useParams();
@@ -34,18 +35,12 @@ export default function EventDetails() {
   const hasUserInterested = eventData.interestedUsers?.includes(
     currentUser?.uid
   );
+  const hasUserNotInterested = eventData.notInterestedUsers?.includes(
+    currentUser?.uid
+  );
 
   const handleRSVP = () => {
     window.open(eventData.rsvpLink, "_blank");
-  };
-
-  const formatTime = (time) => {
-    const date = new Date(`2000-01-01T${time}`);
-    return date.toLocaleString("en-US", {
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-    });
   };
 
   const handleInterested = async () => {
@@ -60,6 +55,14 @@ export default function EventDetails() {
         interestedUsers: eventData.interestedUsers
           ? [...eventData.interestedUsers, currentUser.uid]
           : [currentUser.uid],
+        notInterestedUsers: eventData.notInterestedUsers
+          ? eventData.notInterestedUsers.filter(
+              (uid) => uid !== currentUser.uid
+            )
+          : [],
+        notInterestedCount: eventData.notInterestedCount
+          ? eventData.notInterestedCount - 1
+          : 0,
       });
       setEventData((prevEventData) => ({
         ...prevEventData,
@@ -69,10 +72,68 @@ export default function EventDetails() {
         interestedUsers: prevEventData.interestedUsers
           ? [...prevEventData.interestedUsers, currentUser.uid]
           : [currentUser.uid],
+        notInterestedUsers: prevEventData.notInterestedUsers
+          ? prevEventData.notInterestedUsers.filter(
+              (uid) => uid !== currentUser.uid
+            )
+          : [],
+        notInterestedCount: prevEventData.notInterestedCount
+          ? prevEventData.notInterestedCount - 1
+          : 0,
       }));
     } catch (error) {
       console.error("Error updating interested count:", error);
     }
+  };
+
+  const handleNotInterested = async () => {
+    if (hasUserNotInterested || !currentUser) return;
+
+    const eventDocRef = doc(db, "meetings", eventId);
+    try {
+      await updateDoc(eventDocRef, {
+        notInterestedUsers: eventData.notInterestedUsers
+          ? [...eventData.notInterestedUsers, currentUser.uid]
+          : [currentUser.uid],
+        interestedUsers: eventData.interestedUsers
+          ? eventData.interestedUsers.filter((uid) => uid !== currentUser.uid)
+          : [],
+        notInterestedCount: eventData.notInterestedCount
+          ? eventData.notInterestedCount + 1
+          : 1,
+        interestedCount: eventData.interestedCount
+          ? eventData.interestedCount - 1
+          : 0,
+      });
+      setEventData((prevEventData) => ({
+        ...prevEventData,
+        notInterestedUsers: prevEventData.notInterestedUsers
+          ? [...prevEventData.notInterestedUsers, currentUser.uid]
+          : [currentUser.uid],
+        interestedUsers: prevEventData.interestedUsers
+          ? prevEventData.interestedUsers.filter(
+              (uid) => uid !== currentUser.uid
+            )
+          : [],
+        notInterestedCount: prevEventData.notInterestedCount
+          ? prevEventData.notInterestedCount + 1
+          : 1,
+        interestedCount: prevEventData.interestedCount
+          ? prevEventData.interestedCount - 1
+          : 0,
+      }));
+    } catch (error) {
+      console.error("Error updating not interested count:", error);
+    }
+  };
+
+  const formatTime = (time) => {
+    const date = new Date(`2000-01-01T${time}`);
+    return date.toLocaleString('en-US', {
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    });
   };
 
   return (
@@ -115,7 +176,9 @@ export default function EventDetails() {
               </div>
               <div>
                 <h2 className="text-lg font-medium text-gray-900 mb-1">Time</h2>
-                <p className="text-gray-500">{formatTime(eventData.time)}</p>
+                <p className="text-gray-500">
+                  {formatTime(eventData.time)}
+                </p>
               </div>
             </div>
           </div>
@@ -139,17 +202,17 @@ export default function EventDetails() {
             <p className="text-gray-500">{eventData.organizer}</p>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
             <button
               onClick={handleRSVP}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md flex items-center space-x-2"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md flex items-center justify-center space-x-2 w-full md:w-auto"
             >
               <span>Register</span>
               <LinkIcon className="h-5 w-5" />
             </button>
             <button
               onClick={handleInterested}
-              className={`bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md flex items-center space-x-2 ${
+              className={`bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md flex items-center justify-center space-x-2 w-full md:w-auto ${
                 hasUserInterested || !currentUser
                   ? "opacity-50 cursor-not-allowed"
                   : ""
@@ -161,6 +224,23 @@ export default function EventDetails() {
               {eventData.interestedCount && (
                 <span className="text-gray-500">
                   ({eventData.interestedCount})
+                </span>
+              )}
+            </button>
+            <button
+              onClick={handleNotInterested}
+              className={`bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md flex items-center justify-center space-x-2 w-full md:w-auto ${
+                hasUserNotInterested || !currentUser
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
+              disabled={hasUserNotInterested || !currentUser}
+            >
+              <span>I'm Not Interested</span>
+              <UserMinusIcon className="h-5 w-5" />
+              {eventData.notInterestedCount && (
+                <span className="text-gray-500">
+                  ({eventData.notInterestedCount})
                 </span>
               )}
             </button>

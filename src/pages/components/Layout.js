@@ -1,8 +1,17 @@
 import React from "react";
 import { signOut, getAuth, onAuthStateChanged } from "firebase/auth";
-import { Fragment, useState, useEffect} from "react";
+import { Fragment, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getFirestore, doc, onSnapshot } from "firebase/firestore";
+import {
+  getFirestore,
+  doc,
+  onSnapshot,
+  collection,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+} from "firebase/firestore";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import {
   Bars3Icon,
@@ -32,12 +41,7 @@ const navigation = [
     href: "/calendar",
     icon: CalendarIcon,
     current: window.location.pathname === "/calendar",
-  }
-];
-const teams = [
-  { id: 1, name: "Heroicons", href: "#", initial: "H", current: false },
-  { id: 2, name: "Tailwind Labs", href: "#", initial: "T", current: false },
-  { id: 3, name: "Workcation", href: "#", initial: "W", current: false },
+  },
 ];
 
 function classNames(...classes) {
@@ -46,51 +50,61 @@ function classNames(...classes) {
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [unreadNotifications, setUnreadNotifications] = useState([]);
 
-  const isNotStudentsPage =
-    window.location.pathname !== "/computer-studies" &&
-    window.location.pathname !== "/" &&
-    window.location.pathname !== "/education" &&
-    window.location.pathname !== "/accountancy" &&
-    window.location.pathname !== "/business-administration" &&
-    window.location.pathname !== "/arts-and-sciences" &&
-    window.location.pathname !== "/maritime" &&
-    window.location.pathname !== "/health-sciences" &&
-    window.location.pathname !== "/hospitality" &&
-    window.location.pathname !== "/reports" &&
-    window.location.pathname !== "/dashboard" &&
-    !window.location.pathname.startsWith("/events/");
+  useEffect(() => {
+    const auth = getAuth();
+    const db = getFirestore();
 
-    const [fullName, setFullName] = useState('');
-  
-    useEffect(() => {
-      const auth = getAuth();
-      const db = getFirestore();
-  
-      const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          const userDocRef = doc(db, "users", user.uid);
-          console.log("UID", user.uid);
-          const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
-            if (doc.exists()) {
-              const userData = doc.data();
-              
-              setFullName(userData.fullName);
-            }
-          });
-  
-          return () => unsubscribeSnapshot();
-        } else {
-          setFullName('');
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
+          if (doc.exists()) {
+            const userData = doc.data();
+            setFullName(userData.fullName);
+            fetchUnreadNotifications(db, user.uid, userData.department);
+          }
+        });
+
+        return () => unsubscribeSnapshot();
+      } else {
+        setFullName("");
+        setUnreadNotifications([]);
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  const fetchUnreadNotifications = async (db, userId, department) => {
+    const meetingsRef = collection(db, "meetings");
+    const q = query(
+      meetingsRef,
+      where("department", "in", [department, "All"])
+    );
+    const querySnapshot = await getDocs(q);
+    const notifications = await Promise.all(
+      querySnapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        // Check if viewedBy field doesn't exist or doesn't contain the userId
+        if (!data.viewedBy || !data.viewedBy.includes(userId)) {
+          // If viewedBy field doesn't exist, create it as an empty array
+          if (!data.viewedBy) {
+            await updateDoc(doc.ref, { viewedBy: [] });
+          }
+          return data;
         }
-      });
-  
-      return () => unsubscribeAuth();
-    }, []);
+        return null;
+      })
+    );
+    setUnreadNotifications(notifications.filter(Boolean));
+  };
 
   const auth = getAuth();
   const navigate = useNavigate();
-  
+
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -104,7 +118,24 @@ export default function Layout({ children }) {
     { name: "Your profile", href: "/profile" },
     { name: "Sign out", href: "#", onClick: handleSignOut },
   ];
-  
+  const isNotStudentsPage =
+    window.location.pathname !== "/computer-studies" &&
+    window.location.pathname !== "/" &&
+    window.location.pathname !== "/education" &&
+    window.location.pathname !== "/accountancy" &&
+    window.location.pathname !== "/business-administration" &&
+    window.location.pathname !== "/arts-and-sciences" &&
+    window.location.pathname !== "/maritime" &&
+    window.location.pathname !== "/health-sciences" &&
+    window.location.pathname !== "/hospitality" &&
+    window.location.pathname !== "/reports" &&
+    window.location.pathname !== "/dashboard" &&
+    window.location.pathname !== "/notifications" &&
+    !window.location.pathname.startsWith("/events/");
+
+  const handleNotificationClick = () => {
+    navigate("/notifications");
+  };
   return (
     <>
       <div>
@@ -287,30 +318,23 @@ export default function Layout({ children }) {
 
             <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
               <form className="relative flex flex-1" action="#" method="GET">
-                <label htmlFor="search-field" className="sr-only">
-                  Search
-                </label>
-                <MagnifyingGlassIcon
-                  className="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-gray-400"
-                  aria-hidden="true"
-                />
-                <input
-                  id="search-field"
-                  className="block h-full w-full border-0 py-0 pl-8 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm"
-                  placeholder="Search..."
-                  type="search"
-                  name="search"
-                />
+                <label htmlFor="search-field" className="sr-only"></label>
+                <div className="block h-full w-full border-0 py-0 pl-8 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm" />
               </form>
               <div className="flex items-center gap-x-4 lg:gap-x-6">
                 <button
                   type="button"
-                  className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500"
+                  className="-m-2.5 relative p-2.5 text-gray-400 hover:text-gray-500"
+                  onClick={handleNotificationClick}
                 >
                   <span className="sr-only">View notifications</span>
                   <BellIcon className="h-6 w-6" aria-hidden="true" />
+                  {unreadNotifications.length > 0 && (
+                    <span className="absolute top-0 right-0 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
+                      {unreadNotifications.length}
+                    </span>
+                  )}
                 </button>
-
                 {/* Separator */}
                 <div
                   className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-900/10"
@@ -331,7 +355,7 @@ export default function Layout({ children }) {
                         className="ml-4 text-sm font-semibold leading-6 text-gray-900"
                         aria-hidden="true"
                       >
-                          {fullName}
+                        {fullName}
                       </span>
                       <ChevronDownIcon
                         className="ml-2 h-5 w-5 text-gray-400"

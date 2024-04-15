@@ -8,8 +8,10 @@ const QRScanner = () => {
   const [scanResult, setScanResult] = useState(null);
   const [isScannerActive, setIsScannerActive] = useState(false);
   const [eventName, setEventName] = useState(null);
+  const [eventDate, setEventDate] = useState(null);
   const [cameraId, setCameraId] = useState(null);
   const [locationError, setLocationError] = useState(null);
+  const [dateError, setDateError] = useState(null);
   const [displayLocation, setDisplayLocation] = useState(null);
   const qrRef = useRef(null);
 
@@ -22,7 +24,22 @@ const QRScanner = () => {
         return;
       }
 
+      // Check if the scanned event date matches the current date
+      const currentDate = new Date().toISOString().slice(0, 10);
+      const meetingDocRef = doc(db, "meetings", result.text);
+      const meetingDoc = await getDoc(meetingDocRef);
+      if (meetingDoc.exists()) {
+        const eventDateFromDoc = meetingDoc.data().date;
+        if (eventDateFromDoc !== currentDate) {
+          setDateError("The scanned QR code is not valid for today's date.");
+          return;
+        }
+      } else {
+        console.error("Meeting document does not exist");
+      }
+
       setLocationError(null);
+      setDateError(null);
       setScanResult(result.text);
       const currentUser = auth.currentUser;
       if (currentUser) {
@@ -32,7 +49,9 @@ const QRScanner = () => {
           const meetingDoc = await getDoc(meetingDocRef);
           if (meetingDoc.exists()) {
             const eventNameFromDoc = meetingDoc.data().name;
+            const eventDateFromDoc = meetingDoc.data().date;
             setEventName(eventNameFromDoc);
+            setEventDate(eventDateFromDoc);
           } else {
             console.error("Meeting document does not exist");
           }
@@ -160,9 +179,15 @@ const QRScanner = () => {
       </button>
       {displayLocation}
       {eventName && <p className="mt-4 text-center">Event Name: {eventName}</p>}
+      {eventDate && <p className="mt-2 text-center">Event Date: {eventDate}</p>}
       {locationError && (
         <div className="mt-4 bg-red-500 text-white p-4 rounded">
           <p>{locationError}</p>
+        </div>
+      )}
+      {dateError && (
+        <div className="mt-4 bg-red-500 text-white p-4 rounded">
+          <p>{dateError}</p>
         </div>
       )}
     </div>

@@ -22,7 +22,6 @@ export default function Profile() {
       try {
         const userDocRef = doc(db, "users", uid);
         const userDocSnap = await getDoc(userDocRef);
-
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
           setFullName(userData.fullName);
@@ -33,7 +32,6 @@ export default function Profile() {
             where("attendees", "array-contains", uid)
           );
           const eventsSnap = await getDocs(eventsQuery);
-
           const eventNames = eventsSnap.docs.map((doc) => doc.data().name);
           setEventsAttended(eventNames);
         } else {
@@ -58,30 +56,37 @@ export default function Profile() {
 
   return (
     <Layout>
-    <div class="container mx-auto px-4 py-8">
-      {fullName && (
-        <div class="bg-gradient-to-br from-sky-200 to-indigo-200 rounded-2xl shadow-xl p-6"> 
-          <h1 class="text-3xl font-bold text-gray-800 mb-4">Profile</h1>
-          <p class="text-lg text-gray-700">Full Name: {fullName}</p>
+      <div className="container mx-auto px-4 py-12">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="flex items-center mb-6">
+            <div className="bg-indigo-500 rounded-full h-20 w-20 flex items-center justify-center text-white text-2xl font-bold mr-4">
+              {fullName?.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                {fullName}
+              </h1>
+              <p className="text-gray-600">User Profile</p>
+            </div>
+          </div>
+
+          {eventsAttended.length > 0 && (
+            <div className="bg-gray-100 rounded-lg p-6 mt-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                <i className="fa-solid fa-calendar-check mr-2"></i> Events
+                Attended
+              </h2>
+              <ul className="list-disc pl-6">
+                {eventsAttended.map((eventName, index) => (
+                  <li key={index} className="text-gray-700">
+                    {eventName}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
-      )}
-  
-      {eventsAttended.length > 0 && (
-        <div class="bg-white rounded-2xl shadow-xl p-6 mt-8">
-          <h2 class="text-2xl font-semibold text-gray-800 mb-4">
-             <i class="fa-solid fa-calendar-check mr-2"></i> Events Attended 
-          </h2>
-          <ul class="list-disc ml-6">
-            {eventsAttended.map((eventName, index) => (
-              <li key={index} class="text-gray-700">
-                {eventName}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  </Layout>
-  
+      </div>
+    </Layout>
   );
 }
