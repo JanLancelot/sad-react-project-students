@@ -3,6 +3,7 @@ import QrScanner, { UserMediaRequestError, setQrByScan } from "react-qr-scanner"
 import { doc, updateDoc, getDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { getCurrentPosition } from "./locationUtils";
+import { motion } from "framer-motion";
 
 const QRScanner = () => {
   const [scanResult, setScanResult] = useState(null);
@@ -63,11 +64,13 @@ const QRScanner = () => {
               checkedInUsers: arrayUnion(userUid),
             });
             setCheckedIn(true);
+            setCheckedOut(false);
           } else if (type === "checkout") {
             await updateDoc(meetingDocRef, {
               checkedOutUsers: arrayUnion(userUid),
             });
             setCheckedOut(true);
+            setCheckedIn(false);
 
             if (meetingDoc.data().checkedInUsers.includes(userUid)) {
               const userDocRef = doc(db, "users", userUid);
@@ -95,6 +98,11 @@ const QRScanner = () => {
 
   const toggleScanner = () => {
     setIsScannerActive(!isScannerActive);
+    setScanResult(null);
+    setEventName(null);
+    setEventDate(null);
+    setCheckedIn(false);
+    setCheckedOut(false);
   };
 
   let devarr = "";
@@ -174,7 +182,12 @@ const QRScanner = () => {
       <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
         <h1 className="text-2xl font-bold mb-4">QR Code Scanner</h1>
         {isScannerActive && (
-          <div className="border border-gray-400 rounded-md shadow-md mb-4">
+          <motion.div
+            className="border border-gray-400 rounded-md shadow-md mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <QrScanner
               ref={qrRef}
               delay={300}
@@ -186,40 +199,86 @@ const QRScanner = () => {
                 },
               }}
             />
-          </div>
+          </motion.div>
         )}
-        <button
+        <motion.button
           className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded mb-4"
           onClick={toggleScanner}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
         >
           {isScannerActive ? "Stop Scanner" : "Start Scanner"}
-        </button>
+        </motion.button>
         {displayLocation && (
-          <p className="text-gray-600 text-sm mb-4">
+          <motion.p
+            className="text-gray-600 text-sm mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
             You are {displayLocation.toFixed(2)} km away from the allowed location.
-          </p>
+          </motion.p>
         )}
         {eventName && (
-          <p className="text-gray-700 font-medium mb-2">Event Name: {eventName}</p>
+          <motion.p
+            className="text-gray-700 font-medium mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            Event Name: {eventName}
+          </motion.p>
         )}
         {eventDate && (
-          <p className="text-gray-700 font-medium mb-4">Event Date: {eventDate}</p>
+          <motion.p
+            className="text-gray-700 font-medium mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            Event Date: {eventDate}
+          </motion.p>
         )}
         {checkedIn && (
-          <p className="text-green-500 font-medium mb-2">You have checked in.</p>
+          <motion.p
+            className="text-green-500 font-medium mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            You have checked in.
+          </motion.p>
         )}
         {checkedOut && (
-          <p className="text-green-500 font-medium mb-2">You have checked out.</p>
+          <motion.p
+            className="text-green-500 font-medium mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            You have checked out.
+          </motion.p>
         )}
         {locationError && (
-          <div className="bg-red-500 text-white p-4 rounded mb-4">
+          <motion.div
+            className="bg-red-500 text-white p-4 rounded mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1 }}
+          >
             <p>{locationError}</p>
-          </div>
+          </motion.div>
         )}
         {dateError && (
-          <div className="bg-red-500 text-white p-4 rounded mb-4">
+          <motion.div
+            className="bg-red-500 text-white p-4 rounded mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1 }}
+          >
             <p>{dateError}</p>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>
