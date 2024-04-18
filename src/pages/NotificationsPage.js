@@ -9,6 +9,7 @@ import {
   query,
   where,
   getDocs,
+  getDoc,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
@@ -22,41 +23,58 @@ const NotificationsPage = () => {
   const { currentUser } = useAuth();
 
   useEffect(() => {
-    // Fetch unread notifications from Firestore
     const fetchUnreadNotifications = async () => {
       if (currentUser) {
         const userId = currentUser.uid;
-        const meetingsRef = collection(db, "meetings");
-        const q = query(meetingsRef, where("viewedBy", "not-in", [userId]));
-        const querySnapshot = await getDocs(q);
-        const unreadNotifications = querySnapshot.docs
-          .filter((doc) => {
-            const data = doc.data();
-            return !data.viewedBy || !data.viewedBy.includes(userId);
-          })
-          .map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-        setNotifications(unreadNotifications);
-        setIsLoading(false);
+        const userDocRef = doc(db, "users", userId);
+        const userDocSnapshot = await getDoc(userDocRef);
+
+        if (userDocSnapshot.exists()) {
+          const userData = userDocSnapshot.data();
+          const userDepartment = userData.department;
+
+          const meetingsRef = collection(db, "meetings");
+          const q1 = query(
+            meetingsRef,
+            where("viewedBy", "not-in", [userId]),
+            where("department", "==", userDepartment)
+          );
+          const q2 = query(
+            meetingsRef,
+            where("viewedBy", "not-in", [userId]),
+            where("department", "==", "All")
+          );
+          const q1Snapshot = await getDocs(q1);
+          const q2Snapshot = await getDocs(q2);
+          const unreadNotifications = [
+            ...q1Snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            })),
+            ...q2Snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            })),
+          ].filter((notification) => {
+            return !notification.viewedBy || !notification.viewedBy.includes(userId);
+          });
+
+          setNotifications(unreadNotifications);
+          setIsLoading(false);
+        }
       }
     };
+
     fetchUnreadNotifications();
   }, [db, currentUser]);
 
   const handleNotificationClick = async (notification) => {
     try {
-      // Navigate to the event page and mark the notification as viewed
       const eventId = notification.id;
       const eventRef = doc(db, "meetings", eventId);
-      await updateDoc(
-        eventRef,
-        {
-          viewedBy: arrayUnion(currentUser.uid),
-        },
-        { merge: true }
-      );
+      await updateDoc(eventRef, {
+        viewedBy: arrayUnion(currentUser.uid),
+      }, { merge: true });
       navigate(`/events/${eventId}`);
     } catch (error) {
       console.error("Error updating notification:", error);

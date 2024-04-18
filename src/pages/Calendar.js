@@ -74,12 +74,12 @@ export default function Calendar() {
           ...doc.data(),
           id: doc.id,
         }));
-        setRetrievedMeetings(meetings); // Trigger re-render
+        setRetrievedMeetings(meetings);
         setIsLoading(false);
       }
     };
     fetchMeetings();
-  }, [currentUser]); // Dependency changed to currentUser
+  }, [currentUser]);
 
   const getDaysInMonth = (month, year) => {
     return new Date(year, month + 1, 0).getDate();
@@ -95,31 +95,28 @@ export default function Calendar() {
     ).getDay();
     const days = [];
 
-    // Add days from the previous month
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push({ date: null });
     }
 
-    // Add days for the current month
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(currentYear, currentMonth, i);
       const isToday =
         date.getFullYear() === new Date().getFullYear() &&
         date.getMonth() === new Date().getMonth() &&
         date.getDate() === new Date().getDate();
-      const isSelected = false; // Add logic for selected date if needed
+      const isSelected = false;
       let eventsOnDay =
         meetings.filter(
           (meeting) =>
             new Date(meeting.datetime).getDate() === date.getDate() &&
             new Date(meeting.datetime).getMonth() === currentMonth &&
             new Date(meeting.datetime).getFullYear() === currentYear
-        ) || []; // Initialize eventsOnDay as an empty array if no events
+        ) || [];
 
       days.push({ date, isToday, isSelected, eventsOnDay });
     }
 
-    // Add days for the next month
     for (let i = 1; i <= 6 - lastDayOfMonth; i++) {
       days.push({ date: null });
     }

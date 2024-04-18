@@ -88,9 +88,7 @@ export default function Layout({ children }) {
     const notifications = await Promise.all(
       querySnapshot.docs.map(async (doc) => {
         const data = doc.data();
-        // Check if viewedBy field doesn't exist or doesn't contain the userId
         if (!data.viewedBy || !data.viewedBy.includes(userId)) {
-          // If viewedBy field doesn't exist, create it as an empty array
           if (!data.viewedBy) {
             await updateDoc(doc.ref, { viewedBy: [] });
           }

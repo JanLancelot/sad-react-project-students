@@ -17,14 +17,12 @@ const QRScanner = () => {
 
   const handleScan = async (result) => {
     if (result) {
-      // Check if the user is in the allowed location
       const isAllowedLocation = await isInAllowedLocation();
       if (!isAllowedLocation) {
         setLocationError("You are not in the allowed location to scan this QR code.");
         return;
       }
 
-      // Check if the scanned event date matches the current date
       const currentDate = new Date().toISOString().slice(0, 10);
       const meetingDocRef = doc(db, "meetings", result.text);
       const meetingDoc = await getDoc(meetingDocRef);
@@ -113,10 +111,8 @@ const QRScanner = () => {
   const isInAllowedLocation = async () => {
     try {
       const currentPosition = await getCurrentPosition();
-      // Add your logic to check if the user is in the allowed location(s)
-      // For example, check if the user is within a certain radius of a specific coordinate
       const allowedLocations = [
-        { latitude: 14.801115573450526, longitude: 120.9216095107531, radius: 0.1}, // San Francisco
+        { latitude: 14.801115573450526, longitude: 120.9216095107531, radius: 0.1},
       ];
       for (const location of allowedLocations) {
         const distance = calculateDistance(
@@ -138,14 +134,14 @@ const QRScanner = () => {
   };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Radius of the earth in kilometers
+    const R = 6371;
     const dLat = deg2rad(lat2 - lat1);
     const dLon = deg2rad(lon2 - lon1);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in km
+    const distance = R * c;
     return distance;
   };
 
