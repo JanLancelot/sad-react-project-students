@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import QrScanner, { UserMediaRequestError, setQrByScan } from "react-qr-scanner";
-import { doc, updateDoc, getDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { doc, updateDoc, getDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { getCurrentPosition } from "./locationUtils";
 
@@ -13,6 +13,8 @@ const QRScanner = () => {
   const [locationError, setLocationError] = useState(null);
   const [dateError, setDateError] = useState(null);
   const [displayLocation, setDisplayLocation] = useState(null);
+  const [checkedIn, setCheckedIn] = useState(false);
+  const [checkedOut, setCheckedOut] = useState(false);
   const qrRef = useRef(null);
 
   const handleScan = async (result) => {
@@ -60,12 +62,13 @@ const QRScanner = () => {
             await updateDoc(meetingDocRef, {
               checkedInUsers: arrayUnion(userUid),
             });
+            setCheckedIn(true);
           } else if (type === "checkout") {
             await updateDoc(meetingDocRef, {
               checkedOutUsers: arrayUnion(userUid),
             });
+            setCheckedOut(true);
 
-            // Only add the event to the user's eventsAttended array if they have checked in and out
             if (meetingDoc.data().checkedInUsers.includes(userUid)) {
               const userDocRef = doc(db, "users", userUid);
               await updateDoc(userDocRef, {
@@ -128,8 +131,7 @@ const QRScanner = () => {
     try {
       const currentPosition = await getCurrentPosition();
       const allowedLocations = [
-        // { latitude: 14.801115573450526, longitude: 120.9216095107531, radius: 0.1 },
-        { latitude: 14.8309208785568, longitude: 120.88985823558207, radius: 0.1 },
+        { latitude: 14.801115573450526, longitude: 120.9216095107531, radius: 0.1 },
       ];
       for (const location of allowedLocations) {
         const distance = calculateDistance(
@@ -167,42 +169,58 @@ const QRScanner = () => {
   };
 
   return (
-    <div className="container mx-auto p-8 flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-4">QR Code Scanner</h1>
-      {isScannerActive && (
-        <div className="border border-gray-400 rounded-md shadow-md p-4">
-          <QrScanner
-            ref={qrRef}
-            delay={300}
-            style={previewStyle}
-            onScan={handleScan}
-            constraints={{
-              video: {
-                facingMode: "environment",
-              },
-            }}
-          />
-        </div>
-      )}
-      <button
-        className="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded"
-        onClick={toggleScanner}
-      >
-        {isScannerActive ? "Stop Scanner" : "Start Scanner"}
-      </button>
-      {displayLocation}
-      {eventName && <p className="mt-4 text-center">Event Name: {eventName}</p>}
-      {eventDate && <p className="mt-2 text-center">Event Date: {eventDate}</p>}
-      {locationError && (
-        <div className="mt-4 bg-red-500 text-white p-4 rounded">
-          <p>{locationError}</p>
-        </div>
-      )}
-      {dateError && (
-        <div className="mt-4 bg-red-500 text-white p-4 rounded">
-          <p>{dateError}</p>
-        </div>
-      )}
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-4">QR Code Scanner</h1>
+        {isScannerActive && (
+          <div className="border border-gray-400 rounded-md shadow-md mb-4">
+            <QrScanner
+              ref={qrRef}
+              delay={300}
+              style={previewStyle}
+              onScan={handleScan}
+              constraints={{
+                video: {
+                  facingMode: "environment",
+                },
+              }}
+            />
+          </div>
+        )}
+        <button
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded mb-4"
+          onClick={toggleScanner}
+        >
+          {isScannerActive ? "Stop Scanner" : "Start Scanner"}
+        </button>
+        {displayLocation && (
+          <p className="text-gray-600 text-sm mb-4">
+            You are {displayLocation.toFixed(2)} km away from the allowed location.
+          </p>
+        )}
+        {eventName && (
+          <p className="text-gray-700 font-medium mb-2">Event Name: {eventName}</p>
+        )}
+        {eventDate && (
+          <p className="text-gray-700 font-medium mb-4">Event Date: {eventDate}</p>
+        )}
+        {checkedIn && (
+          <p className="text-green-500 font-medium mb-2">You have checked in.</p>
+        )}
+        {checkedOut && (
+          <p className="text-green-500 font-medium mb-2">You have checked out.</p>
+        )}
+        {locationError && (
+          <div className="bg-red-500 text-white p-4 rounded mb-4">
+            <p>{locationError}</p>
+          </div>
+        )}
+        {dateError && (
+          <div className="bg-red-500 text-white p-4 rounded mb-4">
+            <p>{dateError}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
