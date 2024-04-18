@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import QrScanner, { UserMediaRequestError, setQrByScan } from "react-qr-scanner";
-import { doc, updateDoc, getDoc, arrayUnion } from "firebase/firestore";
+import { doc, updateDoc, getDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { getCurrentPosition } from "./locationUtils";
 
@@ -24,7 +24,8 @@ const QRScanner = () => {
       }
 
       const currentDate = new Date().toISOString().slice(0, 10);
-      const meetingDocRef = doc(db, "meetings", result.text);
+      const [eventId, type] = result.text.split("-");
+      const meetingDocRef = doc(db, "meetings", eventId);
       const meetingDoc = await getDoc(meetingDocRef);
       if (meetingDoc.exists()) {
         const eventDateFromDoc = meetingDoc.data().date;
@@ -38,12 +39,13 @@ const QRScanner = () => {
 
       setLocationError(null);
       setDateError(null);
-      setScanResult(result.text);
+      setScanResult(eventId);
+
       const currentUser = auth.currentUser;
       if (currentUser) {
         const userUid = currentUser.uid;
         try {
-          const meetingDocRef = doc(db, "meetings", result.text);
+          const meetingDocRef = doc(db, "meetings", eventId);
           const meetingDoc = await getDoc(meetingDocRef);
           if (meetingDoc.exists()) {
             const eventNameFromDoc = meetingDoc.data().name;
@@ -53,14 +55,28 @@ const QRScanner = () => {
           } else {
             console.error("Meeting document does not exist");
           }
-          await updateDoc(meetingDocRef, {
-            attendees: arrayUnion(userUid),
-          });
-          const userDocRef = doc(db, "users", userUid);
-          await updateDoc(userDocRef, {
-            eventsAttended: arrayUnion(result.text),
-          });
-          console.log("Attendees array and eventsAttended array updated successfully.");
+
+          if (type === "checkin") {
+            await updateDoc(meetingDocRef, {
+              checkedInUsers: arrayUnion(userUid),
+            });
+          } else if (type === "checkout") {
+            await updateDoc(meetingDocRef, {
+              checkedOutUsers: arrayUnion(userUid),
+            });
+
+            // Only add the event to the user's eventsAttended array if they have checked in and out
+            if (meetingDoc.data().checkedInUsers.includes(userUid)) {
+              const userDocRef = doc(db, "users", userUid);
+              await updateDoc(userDocRef, {
+                eventsAttended: arrayUnion(eventId),
+              });
+              await updateDoc(meetingDocRef, {
+                attendees: arrayUnion(userUid),
+              });
+              console.log("Event added to eventsAttended and attendees arrays successfully.");
+            }
+          }
         } catch (error) {
           console.error("Error updating arrays:", error);
         }
@@ -112,7 +128,7 @@ const QRScanner = () => {
     try {
       const currentPosition = await getCurrentPosition();
       const allowedLocations = [
-        { latitude: 14.801115573450526, longitude: 120.9216095107531, radius: 0.1},
+        { latitude: 14.801115573450526, longitude: 120.9216095107531, radius: 0.1 },
       ];
       for (const location of allowedLocations) {
         const distance = calculateDistance(
@@ -121,7 +137,7 @@ const QRScanner = () => {
           location.latitude,
           location.longitude
         );
-        setDisplayLocation(distance)
+        setDisplayLocation(distance);
         if (distance <= location.radius) {
           return true;
         }
