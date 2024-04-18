@@ -97,14 +97,18 @@ const QRScanner = () => {
   };
 
   const toggleScanner = () => {
-    setIsScannerActive(!isScannerActive);
-    setScanResult(null);
-    setEventName(null);
-    setEventDate(null);
-    setCheckedIn(false);
-    setCheckedOut(false);
+    setIsScannerActive((prevState) => !prevState);
+    if (!isScannerActive) {
+      setScanResult(null);
+      setEventName(null);
+      setEventDate(null);
+      setCheckedIn(false);
+      setCheckedOut(false);
+      setLocationError(null);
+      setDateError(null);
+    }
   };
-
+  
   let devarr = "";
   const selectBackCamera = async () => {
     try {
