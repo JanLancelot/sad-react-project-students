@@ -147,10 +147,11 @@ const QRScanner = () => {
   const isInAllowedLocation = async () => {
     try {
       const currentPosition = await getCurrentPosition();
-      const allowedLocations = [
-        // { latitude: 14.801115573450526, longitude: 120.9216095107531, radius: 0.1 },
-        { latitude: eventLatitude, longitude: eventLongitude, radius: 0.05 },
-      ];
+      const allowedLocations = {
+        latitude: eventLatitude, 
+        longitude: eventLongitude,
+        radius: 0.05 // Adjust the radius as needed
+      };
       for (const location of allowedLocations) {
         const distance = calculateDistance(
           currentPosition.coords.latitude,
