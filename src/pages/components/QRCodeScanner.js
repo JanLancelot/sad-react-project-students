@@ -16,10 +16,6 @@ const QRScanner = () => {
   const [displayLocation, setDisplayLocation] = useState(null);
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkedOut, setCheckedOut] = useState(false);
-
-  const [eventLatitude, setEventLatitude] = useState(null);
-  const [eventLongitude, setEventLongitude] = useState(null);
-
   const qrRef = useRef(null);
 
   const handleScan = async (result) => {
@@ -57,13 +53,8 @@ const QRScanner = () => {
           if (meetingDoc.exists()) {
             const eventNameFromDoc = meetingDoc.data().name;
             const eventDateFromDoc = meetingDoc.data().date;
-            const eventLatitudeFromDoc = meetingDoc.data().latitude;
-            const eventLongitudeFromDoc = meetingDoc.data().longitude;
-
             setEventName(eventNameFromDoc);
             setEventDate(eventDateFromDoc);
-            setEventLatitude(eventLatitudeFromDoc);
-            setEventLongitude(eventLongitudeFromDoc);
           } else {
             console.error("Meeting document does not exist");
           }
@@ -147,11 +138,10 @@ const QRScanner = () => {
   const isInAllowedLocation = async () => {
     try {
       const currentPosition = await getCurrentPosition();
-      const allowedLocations = {
-        latitude: eventLatitude, 
-        longitude: eventLongitude,
-        radius: 0.05 // Adjust the radius as needed
-      };
+      const allowedLocations = [
+        // { latitude: 14.801115573450526, longitude: 120.9216095107531, radius: 0.1 },
+        { latitude: 14.8309208785568, longitude: 120.88985823558207, radius: 0.1 },
+      ];
       for (const location of allowedLocations) {
         const distance = calculateDistance(
           currentPosition.coords.latitude,
