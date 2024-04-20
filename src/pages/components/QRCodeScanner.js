@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import QrScanner, { UserMediaRequestError, setQrByScan } from "react-qr-scanner";
+import QrScanner, {
+  UserMediaRequestError,
+  setQrByScan,
+} from "react-qr-scanner";
 import { doc, updateDoc, getDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { getCurrentPosition } from "./locationUtils";
@@ -33,15 +36,20 @@ const QRScanner = () => {
         const eventLongitude = eventData.longitude;
 
         const currentDate = new Date().toISOString().slice(0, 10);
-        
+
         if (eventDateFromDoc !== currentDate) {
           setDateError("The scanned QR code is not valid for today's date.");
           return;
         }
 
-        const isAllowedLocation = await isInAllowedLocation(eventLatitude, eventLongitude);
+        const isAllowedLocation = await isInAllowedLocation(
+          eventLatitude,
+          eventLongitude
+        );
         if (!isAllowedLocation) {
-          setLocationError("You are not in the allowed location to scan this QR code.");
+          setLocationError(
+            "You are not in the allowed location to scan this QR code."
+          );
           return;
         }
 
@@ -53,7 +61,42 @@ const QRScanner = () => {
         setEventLatitude(eventLatitude);
         setEventLongitude(eventLongitude);
 
-        // ... (rest of the handleScan function)
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const userUid = currentUser.uid;
+          try {
+            if (type === "checkin") {
+              await updateDoc(meetingDocRef, {
+                checkedInUsers: arrayUnion(userUid),
+              });
+              setCheckedIn(true);
+              setCheckedOut(false);
+            } else if (type === "checkout") {
+              await updateDoc(meetingDocRef, {
+                checkedOutUsers: arrayUnion(userUid),
+              });
+              setCheckedOut(true);
+              setCheckedIn(false);
+
+              if (meetingDoc.data().checkedInUsers.includes(userUid)) {
+                const userDocRef = doc(db, "users", userUid);
+                await updateDoc(userDocRef, {
+                  eventsAttended: arrayUnion(eventId),
+                });
+                await updateDoc(meetingDocRef, {
+                  attendees: arrayUnion(userUid),
+                });
+                console.log(
+                  "Event added to eventsAttended and attendees arrays successfully."
+                );
+              }
+            }
+          } catch (error) {
+            console.error("Error updating arrays:", error);
+          }
+        } else {
+          console.error("No user is currently authenticated.");
+        }
       } else {
         console.error("Meeting document does not exist");
       }
@@ -79,7 +122,9 @@ const QRScanner = () => {
       const devices = await navigator.mediaDevices.enumerateDevices();
       devarr = devices;
       console.log(devarr);
-      const backCamera = devices.find((device) => device.kind === "videoinput" && /back/i.test(device.label));
+      const backCamera = devices.find(
+        (device) => device.kind === "videoinput" && /back/i.test(device.label)
+      );
       if (backCamera) {
         setCameraId(backCamera.deviceId);
       } else {
@@ -133,7 +178,10 @@ const QRScanner = () => {
     const dLon = deg2rad(lon2 - lon1);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos(deg2rad(lat1)) *
+        Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return distance;
@@ -183,7 +231,8 @@ const QRScanner = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            You are {displayLocation.toFixed(2)} km away from the allowed location.
+            You are {displayLocation.toFixed(2)} km away from the allowed
+            location.
           </motion.p>
         )}
         {eventName && (
@@ -206,7 +255,7 @@ const QRScanner = () => {
             Event Date: {eventDate}
           </motion.p>
         )}
-                {eventLatitude && eventLongitude && (
+        {eventLatitude && eventLongitude && (
           <motion.p
             className="text-gray-700 font-medium mb-4"
             initial={{ opacity: 0 }}
