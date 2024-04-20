@@ -219,6 +219,7 @@ const QRScanner = () => {
         >
           {isScannerActive ? "Stop Scanner" : "Start Scanner"}
         </motion.button>
+        <div>{displayLocation}</div>
         {displayLocation && (
           <motion.p
             className="text-gray-600 text-sm mb-4"
