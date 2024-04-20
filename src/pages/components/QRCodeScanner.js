@@ -16,81 +16,46 @@ const QRScanner = () => {
   const [displayLocation, setDisplayLocation] = useState(null);
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkedOut, setCheckedOut] = useState(false);
-  const [eLatitude, setELatitude] = useState(null);
-  const [eLongtitude, setELongitude] = useState(null);
-
+  const [eventLatitude, setEventLatitude] = useState(null);
+  const [eventLongitude, setEventLongitude] = useState(null);
   const qrRef = useRef(null);
 
   const handleScan = async (result) => {
     if (result) {
-      const isAllowedLocation = await isInAllowedLocation();
-      if (!isAllowedLocation) {
-        setLocationError("You are not in the allowed location to scan this QR code.");
-        return;
-      }
-
-      const currentDate = new Date().toISOString().slice(0, 10);
       const [eventId, type] = result.text.split("-");
       const meetingDocRef = doc(db, "meetings", eventId);
       const meetingDoc = await getDoc(meetingDocRef);
+
       if (meetingDoc.exists()) {
-        const eventDateFromDoc = meetingDoc.data().date;
+        const eventData = meetingDoc.data();
+        const eventDateFromDoc = eventData.date;
+        const eventLatitude = eventData.latitude;
+        const eventLongitude = eventData.longitude;
+
+        const currentDate = new Date().toISOString().slice(0, 10);
+        
         if (eventDateFromDoc !== currentDate) {
           setDateError("The scanned QR code is not valid for today's date.");
           return;
         }
+
+        const isAllowedLocation = await isInAllowedLocation(eventLatitude, eventLongitude);
+        if (!isAllowedLocation) {
+          setLocationError("You are not in the allowed location to scan this QR code.");
+          return;
+        }
+
+        setLocationError(null);
+        setDateError(null);
+        setScanResult(eventId);
+        setEventName(eventData.name);
+        setEventDate(eventDateFromDoc);
+        setEventLatitude(eventLatitude);
+        setEventLongitude(eventLongitude);
+
+        // ... (rest of the handleScan function)
       } else {
         console.error("Meeting document does not exist");
-      }
-
-      setLocationError(null);
-      setDateError(null);
-      setScanResult(eventId);
-
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        const userUid = currentUser.uid;
-        try {
-          const meetingDocRef = doc(db, "meetings", eventId);
-          const meetingDoc = await getDoc(meetingDocRef);
-          if (meetingDoc.exists()) {
-            const eventNameFromDoc = meetingDoc.data().name;
-            const eventDateFromDoc = meetingDoc.data().date;
-            setEventName(eventNameFromDoc);
-            setEventDate(eventDateFromDoc);
-          } else {
-            console.error("Meeting document does not exist");
-          }
-
-          if (type === "checkin") {
-            await updateDoc(meetingDocRef, {
-              checkedInUsers: arrayUnion(userUid),
-            });
-            setCheckedIn(true);
-            setCheckedOut(false);
-          } else if (type === "checkout") {
-            await updateDoc(meetingDocRef, {
-              checkedOutUsers: arrayUnion(userUid),
-            });
-            setCheckedOut(true);
-            setCheckedIn(false);
-
-            if (meetingDoc.data().checkedInUsers.includes(userUid)) {
-              const userDocRef = doc(db, "users", userUid);
-              await updateDoc(userDocRef, {
-                eventsAttended: arrayUnion(eventId),
-              });
-              await updateDoc(meetingDocRef, {
-                attendees: arrayUnion(userUid),
-              });
-              console.log("Event added to eventsAttended and attendees arrays successfully.");
-            }
-          }
-        } catch (error) {
-          console.error("Error updating arrays:", error);
-        }
-      } else {
-        console.error("No user is currently authenticated.");
       }
     }
   };
@@ -138,39 +103,24 @@ const QRScanner = () => {
     selectCamera();
   }, []);
 
-  const isInAllowedLocation = async () => {
+  const isInAllowedLocation = async (eventLatitude, eventLongitude) => {
     try {
       const currentPosition = await getCurrentPosition();
-      const allowedLocations = [];
+      const allowedLocation = {
+        latitude: eventLatitude,
+        longitude: eventLongitude,
+        radius: 1, // Radius in kilometers
+      };
 
-      const meetingDocRef = doc(db, "meetings", scanResult);
-      const meetingDoc = await getDoc(meetingDocRef);
-      if (meetingDoc.exists()) {
-        const latitude = meetingDoc.data().latitude;
-        const longitude = meetingDoc.data().longitude;
-        setELatitude(latitude);
-        setELongitude(longitude);
-        console.log(eLatitude);
-        console.log(eLongtitude);
-        const radius = 0.1; // Hard-coded radius of 0.05
-        allowedLocations.push({ latitude, longitude, radius });
-      } else {
-        console.error("Meeting document does not exist");
-      }
+      const distance = calculateDistance(
+        currentPosition.coords.latitude,
+        currentPosition.coords.longitude,
+        allowedLocation.latitude,
+        allowedLocation.longitude
+      );
 
-      for (const location of allowedLocations) {
-        const distance = calculateDistance(
-          currentPosition.coords.latitude,
-          currentPosition.coords.longitude,
-          location.latitude,
-          location.longitude
-        );
-        setDisplayLocation(distance);
-        if (distance <= location.radius) {
-          return true;
-        }
-      }
-      return false;
+      setDisplayLocation(distance);
+      return distance <= allowedLocation.radius;
     } catch (error) {
       console.error("Error checking location:", error);
       return false;
@@ -226,10 +176,6 @@ const QRScanner = () => {
         >
           {isScannerActive ? "Stop Scanner" : "Start Scanner"}
         </motion.button>
-        <div>Display Location: {displayLocation}</div>
-        <div>Display latitude: {eLatitude}</div>
-        <div>Display longitude: {eLongtitude}</div>
-
         {displayLocation && (
           <motion.p
             className="text-gray-600 text-sm mb-4"
@@ -258,6 +204,16 @@ const QRScanner = () => {
             transition={{ duration: 0.5, delay: 0.6 }}
           >
             Event Date: {eventDate}
+          </motion.p>
+        )}
+                {eventLatitude && eventLongitude && (
+          <motion.p
+            className="text-gray-700 font-medium mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            Event Latitude: {eventLatitude}, Event Longitude: {eventLongitude}
           </motion.p>
         )}
         {checkedIn && (
