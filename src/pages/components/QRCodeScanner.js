@@ -16,6 +16,9 @@ const QRScanner = () => {
   const [displayLocation, setDisplayLocation] = useState(null);
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkedOut, setCheckedOut] = useState(false);
+  const [eLatitude, setELatitude] = useState(null);
+  const [eLongtitude, setELongitude] = useState(null);
+
   const qrRef = useRef(null);
 
   const handleScan = async (result) => {
@@ -145,6 +148,8 @@ const QRScanner = () => {
       if (meetingDoc.exists()) {
         const latitude = meetingDoc.data().latitude;
         const longitude = meetingDoc.data().longitude;
+        setELatitude(latitude);
+        setELongitude(longitude);
         const radius = 0.05; // Hard-coded radius of 0.05
         allowedLocations.push({ latitude, longitude, radius });
       } else {
@@ -219,7 +224,10 @@ const QRScanner = () => {
         >
           {isScannerActive ? "Stop Scanner" : "Start Scanner"}
         </motion.button>
-        <div>{displayLocation}</div>
+        <div>Display Location: {displayLocation}</div>
+        <div>Display latitude: {eLatitude}</div>
+        <div>Display longitude: {eLongtitude}</div>
+
         {displayLocation && (
           <motion.p
             className="text-gray-600 text-sm mb-4"
