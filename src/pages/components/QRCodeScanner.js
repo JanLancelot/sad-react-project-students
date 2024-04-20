@@ -150,7 +150,9 @@ const QRScanner = () => {
         const longitude = meetingDoc.data().longitude;
         setELatitude(latitude);
         setELongitude(longitude);
-        const radius = 0.05; // Hard-coded radius of 0.05
+        console.log(eLatitude);
+        console.log(eLongtitude);
+        const radius = 0.1; // Hard-coded radius of 0.05
         allowedLocations.push({ latitude, longitude, radius });
       } else {
         console.error("Meeting document does not exist");
