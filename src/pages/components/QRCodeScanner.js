@@ -25,6 +25,8 @@ const QRScanner = () => {
 
   const handleScan = async (result) => {
     if (result) {
+      setIsScannerActive(false); // Stop the scanner after a successful scan
+
       const [eventId, type] = result.text.split("-");
       const meetingDocRef = doc(db, "meetings", eventId);
       const meetingDoc = await getDoc(meetingDocRef);
