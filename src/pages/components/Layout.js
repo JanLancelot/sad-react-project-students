@@ -343,11 +343,9 @@ export default function Layout({ children }) {
                 <Menu as="div" className="relative">
                   <Menu.Button className="-m-1.5 flex items-center p-1.5">
                     <span className="sr-only">Open user menu</span>
-                    <img
-                      className="h-8 w-8 rounded-full bg-gray-50"
-                      src="https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/256642337_111854787976909_5883138854520283023_n.jpg?_nc_cat=103&cb=99be929b-b574a898&ccb=1-7&_nc_sid=9c7eae&_nc_eui2=AeFE1v3djmBZvmrKjOnJG5iy12hMaUykuo7XaExpTKS6jlfFx3haAEQdA6CU62LdI9bat4c3n7H6JVcFZI57j-mj&_nc_ohc=LsNbglx625cAX-AyJIf&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&oh=00_AfAu3l31Kf1M-B2OuXQhY8kQ3gsQPUh6XItGRaeCbcDGYA&oe=65E9BC75"
-                      alt=""
-                    />
+                    <div className="bg-indigo-500 rounded-full h-8 w-8 flex items-center justify-center text-white text-base font-bold mr-2">
+                      {fullName?.charAt(0).toUpperCase()}
+                    </div>
                     <span className="hidden lg:flex lg:items-center">
                       <span
                         className="ml-4 text-sm font-semibold leading-6 text-gray-900"
