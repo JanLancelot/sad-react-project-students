@@ -1,15 +1,12 @@
 import React, { useState } from "react";
-import {
-  doc,
-  updateDoc,
-  arrayUnion,
-  collection,
-  addDoc,
-  Timestamp,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import { doc, updateDoc, arrayUnion, collection, addDoc, Timestamp } from "firebase/firestore";
+import { db, auth } from "../../firebase";
+import { useParams } from "react-router-dom";
 
-const FeedbackForm = ({ eventId, userId, onFeedbackSubmitted }) => {
+const FeedbackForm = () => {
+  const { eventId } = useParams(); // Get the eventId from the URL
+  const userId = auth.currentUser?.uid; // Get the currently authenticated user's uid
+
   const [formData, setFormData] = useState({
     question1: null,
     question2: null,
@@ -43,14 +40,15 @@ const FeedbackForm = ({ eventId, userId, onFeedbackSubmitted }) => {
       const feedbackCollectionRef = collection(meetingDocRef, "feedbacks");
 
       // Add the user to attendees and eventsAttended arrays
-      await updateDoc(meetingDocRef, {
-        attendees: arrayUnion(userId),
-      });
-
-      const userDocRef = doc(db, "users", userId);
-      await updateDoc(userDocRef, {
-        eventsAttended: arrayUnion(eventId),
-      });
+      if (userId) {
+        await updateDoc(meetingDocRef, {
+          attendees: arrayUnion(userId),
+        });
+        const userDocRef = doc(db, "users", userId);
+        await updateDoc(userDocRef, {
+          eventsAttended: arrayUnion(eventId),
+        });
+      }
 
       // Create a new feedback document in the subcollection
       await addDoc(feedbackCollectionRef, {
@@ -58,13 +56,11 @@ const FeedbackForm = ({ eventId, userId, onFeedbackSubmitted }) => {
         submittedBy: userId,
         submittedAt: Timestamp.now(),
       });
-
-      onFeedbackSubmitted();
     } catch (error) {
       console.error("Error submitting feedback:", error);
     }
   };
-
+  
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
       <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">

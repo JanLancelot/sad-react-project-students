@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import FeedbackForm from './FeedbackForm';
 import QrScanner, {
   UserMediaRequestError,
   setQrByScan,
@@ -8,6 +7,7 @@ import { doc, updateDoc, getDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { getCurrentPosition } from "./locationUtils";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
 
 const QRScanner = () => {
   const [scanResult, setScanResult] = useState(null);
@@ -24,11 +24,11 @@ const QRScanner = () => {
   const [eventLongitude, setEventLongitude] = useState(null);
   const qrRef = useRef(null);
 
-  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const navigate = useNavigate(); // Initialize the navigate function
 
   const handleScan = async (result) => {
     if (result) {
-      setIsScannerActive(false);
+      setIsScannerActive(false); // Stop the scanner after a successful scan
 
       const [eventId, type] = result.text.split("-");
       const meetingDocRef = doc(db, "meetings", eventId);
@@ -71,34 +71,33 @@ const QRScanner = () => {
           const userUid = currentUser.uid;
           try {
             if (type === "checkin") {
-              if (eventData.checkedInUsers.includes(userUid)) {
-                setLocationError("You have already checked in for this event.");
-                return;
-              }
               await updateDoc(meetingDocRef, {
                 checkedInUsers: arrayUnion(userUid),
               });
               setCheckedIn(true);
               setCheckedOut(false);
             } else if (type === "checkout") {
-              if (!eventData.checkedInUsers.includes(userUid)) {
-                setLocationError(
-                  "You cannot check out without first checking in."
-                );
-                return;
-              }
-              if (eventData.checkedOutUsers.includes(userUid)) {
-                setLocationError(
-                  "You have already checked out for this event."
-                );
-                return;
-              }
               await updateDoc(meetingDocRef, {
                 checkedOutUsers: arrayUnion(userUid),
               });
               setCheckedOut(true);
               setCheckedIn(false);
-              setShowFeedbackForm(true); // Show the feedback form after successful check-out
+
+              if (meetingDoc.data().checkedInUsers.includes(userUid)) {
+                const userDocRef = doc(db, "users", userUid);
+                await updateDoc(userDocRef, {
+                  eventsAttended: arrayUnion(eventId),
+                });
+                await updateDoc(meetingDocRef, {
+                  attendees: arrayUnion(userUid),
+                });
+                console.log(
+                  "Event added to eventsAttended and attendees arrays successfully."
+                );
+
+                // Navigate to the /evalform/[eventid] route after successful checkout
+                navigate(`/evalform/${eventId}`);
+              }
             }
           } catch (error) {
             console.error("Error updating arrays:", error);
@@ -111,6 +110,7 @@ const QRScanner = () => {
       }
     }
   };
+
 
   const handleError = (error) => {
     console.error(error);
@@ -163,7 +163,7 @@ const QRScanner = () => {
       const allowedLocation = {
         latitude: eventLatitude,
         longitude: eventLongitude,
-        radius: 1, // Radius in kilometers
+        radius: 0.05, // Radius in kilometers
       };
 
       const distance = calculateDistance(
@@ -202,131 +202,119 @@ const QRScanner = () => {
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
-      {showFeedbackForm ? (
-        <FeedbackForm
-          eventId={scanResult}
-          userId={auth.currentUser?.uid}
-          onFeedbackSubmitted={() => {
-            // Handle actions after feedback submission
-            setShowFeedbackForm(false);
-            // Add the user to attendees and eventsAttended arrays here
-          }}
-        />
-      ) : (
-        <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
-          <h1 className="text-2xl font-bold mb-4">QR Code Scanner</h1>
-          {isScannerActive && (
-            <motion.div
-              className="border border-gray-400 rounded-md shadow-md mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <QrScanner
-                ref={qrRef}
-                delay={300}
-                style={previewStyle}
-                onScan={handleScan}
-                constraints={{
-                  video: {
-                    facingMode: "environment",
-                  },
-                }}
-              />
-            </motion.div>
-          )}
-          <motion.button
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded mb-4"
-            onClick={toggleScanner}
+      <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-4">QR Code Scanner</h1>
+        {isScannerActive && (
+          <motion.div
+            className="border border-gray-400 rounded-md shadow-md mb-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.5 }}
           >
-            {isScannerActive ? "Stop Scanner" : "Start Scanner"}
-          </motion.button>
-          {displayLocation && (
-            <motion.p
-              className="text-gray-600 text-sm mb-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              You are {displayLocation.toFixed(2)} km away from the allowed
-              location.
-            </motion.p>
-          )}
-          {eventName && (
-            <motion.p
-              className="text-gray-700 font-medium mb-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              Event Name: {eventName}
-            </motion.p>
-          )}
-          {eventDate && (
-            <motion.p
-              className="text-gray-700 font-medium mb-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-            >
-              Event Date: {eventDate}
-            </motion.p>
-          )}
-          {eventLatitude && eventLongitude && (
-            <motion.p
-              className="text-gray-700 font-medium mb-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-            >
-              Event Latitude: {eventLatitude}, Event Longitude: {eventLongitude}
-            </motion.p>
-          )}
-          {checkedIn && (
-            <motion.p
-              className="text-green-500 font-medium mb-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-            >
-              You have checked in.
-            </motion.p>
-          )}
-          {checkedOut && (
-            <motion.p
-              className="text-green-500 font-medium mb-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-            >
-              You have checked out.
-            </motion.p>
-          )}
-          {locationError && (
-            <motion.div
-              className="bg-red-500 text-white p-4 rounded mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 1 }}
-            >
-              <p>{locationError}</p>
-            </motion.div>
-          )}
-          {dateError && (
-            <motion.div
-              className="bg-red-500 text-white p-4 rounded mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 1 }}
-            >
-              <p>{dateError}</p>
-            </motion.div>
-          )}
-        </div>
-      )}
+            <QrScanner
+              ref={qrRef}
+              delay={300}
+              style={previewStyle}
+              onScan={handleScan}
+              constraints={{
+                video: {
+                  facingMode: "environment",
+                },
+              }}
+            />
+          </motion.div>
+        )}
+        <motion.button
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded mb-4"
+          onClick={toggleScanner}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          {isScannerActive ? "Stop Scanner" : "Start Scanner"}
+        </motion.button>
+        {displayLocation && (
+          <motion.p
+            className="text-gray-600 text-sm mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            You are {displayLocation.toFixed(2)} km away from the allowed
+            location.
+          </motion.p>
+        )}
+        {eventName && (
+          <motion.p
+            className="text-gray-700 font-medium mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            Event Name: {eventName}
+          </motion.p>
+        )}
+        {eventDate && (
+          <motion.p
+            className="text-gray-700 font-medium mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            Event Date: {eventDate}
+          </motion.p>
+        )}
+        {eventLatitude && eventLongitude && (
+          <motion.p
+            className="text-gray-700 font-medium mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            Event Latitude: {eventLatitude}, Event Longitude: {eventLongitude}
+          </motion.p>
+        )}
+        {checkedIn && (
+          <motion.p
+            className="text-green-500 font-medium mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            You have checked in.
+          </motion.p>
+        )}
+        {checkedOut && (
+          <motion.p
+            className="text-green-500 font-medium mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            You have checked out.
+          </motion.p>
+        )}
+        {locationError && (
+          <motion.div
+            className="bg-red-500 text-white p-4 rounded mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1 }}
+          >
+            <p>{locationError}</p>
+          </motion.div>
+        )}
+        {dateError && (
+          <motion.div
+            className="bg-red-500 text-white p-4 rounded mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1 }}
+          >
+            <p>{dateError}</p>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 };
