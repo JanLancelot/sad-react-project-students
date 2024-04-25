@@ -128,7 +128,7 @@ const EvalForm = () => {
       console.error("Error adding evaluation:", error);
     }
   };
-  
+
   return (
     <Layout>
       <div className="max-w-3xl mx-auto py-8">
@@ -139,20 +139,20 @@ const EvalForm = () => {
           <div className="mb-4">
             <input
               type="text"
-              name="name"
+              name="fullName"
               placeholder="Name of Participant"
-              value={formData.name}
-              onChange={handleChange}
+              value={formData.fullName}
+              disabled
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             />
           </div>
           <div className="mb-4">
             <input
               type="text"
-              name="course"
+              name="yearSection"
               placeholder="Course and Year"
-              value={formData.course}
-              onChange={handleChange}
+              value={formData.yearSection}
+              disabled
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             />
           </div>
