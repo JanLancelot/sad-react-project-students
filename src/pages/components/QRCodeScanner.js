@@ -22,6 +22,8 @@ const QRScanner = () => {
   const [checkedOut, setCheckedOut] = useState(false);
   const [eventLatitude, setEventLatitude] = useState(null);
   const [eventLongitude, setEventLongitude] = useState(null);
+  const [showEvalForm, setShowEvalForm] = useState(false);
+
   const qrRef = useRef(null);
 
   const navigate = useNavigate(); // Initialize the navigate function
@@ -82,22 +84,7 @@ const QRScanner = () => {
               });
               setCheckedOut(true);
               setCheckedIn(false);
-
-              if (meetingDoc.data().checkedInUsers.includes(userUid)) {
-                const userDocRef = doc(db, "users", userUid);
-                await updateDoc(userDocRef, {
-                  eventsAttended: arrayUnion(eventId),
-                });
-                await updateDoc(meetingDocRef, {
-                  attendees: arrayUnion(userUid),
-                });
-                console.log(
-                  "Event added to eventsAttended and attendees arrays successfully."
-                );
-
-                // Navigate to the /evalform/[eventid] route after successful checkout
-                navigate(`/evalform/${eventId}`);
-              }
+              navigate(`/evalform/${eventId}`);
             }
           } catch (error) {
             console.error("Error updating arrays:", error);
