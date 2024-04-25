@@ -1,64 +1,49 @@
-import React, { useState } from "react";
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  updateDoc,
-  arrayUnion,
-} from "firebase/firestore";
+import React, { useState } from 'react';
+import { addDoc, collection, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { auth, db } from "../../firebase";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 const EvalForm = () => {
   const { eventId } = useParams();
   const currentUser = auth.currentUser;
   const userUid = currentUser.uid;
+  const navigate = useNavigate();
 
   const ratingLabels = [
-    "was in-line with the DYCI Vision-Mission and core values",
-    "achieved its goals/objectives (or theme)",
-    "met the need of the students",
-    "The committees performed their service",
-    "was well-participated by uthe student",
-    "The date and time was appropriate for the activity",
-    "The venue was appropriate for the activity",
-    "The school resources were properly managed",
-    "was well organized and well planned",
-    "was well attended by the participants",
+    'was in-line with the DYCI Vision-Mission and core values',
+    'achieved its goals/objectives (or theme)',
+    'met the need of the students',
+    'The committees performed their service',
+    'was well-participated by uthe student',
+    'The date and time was appropriate for the activity',
+    'The venue was appropriate for the activity',
+    'The school resources were properly managed',
+    'was well organized and well planned',
+    'was well attended by the participants',
   ];
 
   const [formData, setFormData] = useState({
-    name: "",
-    course: "",
+    name: '',
+    course: '',
     ratings: Array(10).fill(null),
-    bestFeatures: "",
-    suggestions: "",
-    otherComments: "",
+    bestFeatures: '',
+    suggestions: '',
+    otherComments: '',
     coreValues: [],
   });
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    if (name.startsWith("ratings")) {
-      const ratingIndex = parseInt(
-        name.replace("ratings[", "").replace("]", "")
-      );
+    if (name.startsWith('ratings')) {
+      const ratingIndex = parseInt(name.replace('ratings[', '').replace(']', ''));
       setFormData((prevData) => ({
         ...prevData,
-        ratings: prevData.ratings.map((rating, index) =>
-          index === ratingIndex ? parseInt(value) : rating
-        ),
+        ratings: prevData.ratings.map((rating, index) => (index === ratingIndex ? parseInt(value) : rating)),
       }));
     } else {
       setFormData((prevData) => ({
         ...prevData,
-        [name]:
-          type === "checkbox"
-            ? checked
-              ? [...prevData[name], value]
-              : prevData[name].filter((v) => v !== value)
-            : value,
+        [name]: type === 'checkbox' ? (checked ? [...prevData[name], value] : prevData[name].filter((v) => v !== value)) : value,
       }));
     }
   };
@@ -66,19 +51,19 @@ const EvalForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const meetingRef = doc(db, "meetings", eventId);
+      const meetingRef = doc(db, 'meetings', eventId);
       const meetingDoc = await getDoc(meetingRef);
 
-      const evalRef = collection(meetingRef, "evaluations");
+      const evalRef = collection(meetingRef, 'evaluations');
       await addDoc(evalRef, formData);
       // Reset form data after successful submission
       setFormData({
-        name: "",
-        course: "",
+        name: '',
+        course: '',
         ratings: Array(10).fill(null),
-        bestFeatures: "",
-        suggestions: "",
-        otherComments: "",
+        bestFeatures: '',
+        suggestions: '',
+        otherComments: '',
         coreValues: [],
       });
 
@@ -93,9 +78,12 @@ const EvalForm = () => {
         console.log(
           "Event added to eventsAttended and attendees arrays successfully."
         );
+        navigate('/dashboard');
       }
+
+      // Redirect to /dashboard after successful submission
     } catch (error) {
-      console.error("Error adding evaluation:", error);
+      console.error('Error adding evaluation:', error);
     }
   };
 
