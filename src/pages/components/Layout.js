@@ -129,7 +129,8 @@ export default function Layout({ children }) {
     window.location.pathname !== "/reports" &&
     window.location.pathname !== "/dashboard" &&
     window.location.pathname !== "/notifications" &&
-    !window.location.pathname.startsWith("/events/");
+    !window.location.pathname.startsWith("/events/") &&
+    !window.location.pathname.startsWith("/evalform/");
 
   const handleNotificationClick = () => {
     navigate("/notifications");

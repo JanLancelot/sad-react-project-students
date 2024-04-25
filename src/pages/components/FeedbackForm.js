@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   addDoc,
   collection,
@@ -16,21 +16,21 @@ const EvalForm = () => {
   const navigate = useNavigate();
 
   const ratingLabels = [
-    "was in-line with the DYCI Vision-Mission and core values",
-    "achieved its goals/objectives (or theme)",
-    "met the need of the students",
+    "The activitywas in-line with the DYCI Vision-Mission and core values",
+    "The activity achieved its goals/objectives (or theme)",
+    "The activity met the need of the students",
     "The committees performed their service",
-    "was well-participated by uthe student",
+    "The activity was well-participated by uthe student",
     "The date and time was appropriate for the activity",
     "The venue was appropriate for the activity",
     "The school resources were properly managed",
-    "was well organized and well planned",
-    "was well attended by the participants",
+    "The activity was well organized and well planned",
+    "The activity was well attended by the participants",
   ];
 
   const [formData, setFormData] = useState({
-    name: "",
-    course: "",
+    fullName: "",
+    yearSection: "",
     ratings: Array(10).fill(null),
     bestFeatures: "",
     suggestions: "",
@@ -63,6 +63,30 @@ const EvalForm = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userUid = currentUser.uid;
+        const userDocRef = doc(db, "users", userUid);
+        const userDocSnapshot = await getDoc(userDocRef);
+
+        if (userDocSnapshot.exists()) {
+          const { fullName, yearSection } = userDocSnapshot.data();
+          setFormData((prevData) => ({
+            ...prevData,
+            fullName,
+            yearSection,
+          }));
+        } else {
+          console.log("User document does not exist");
+        }
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -73,8 +97,8 @@ const EvalForm = () => {
       await addDoc(evalRef, formData);
       // Reset form data after successful submission
       setFormData({
-        name: "",
-        course: "",
+        fullName: "",
+        yearSection: "",
         ratings: Array(10).fill(null),
         bestFeatures: "",
         suggestions: "",
@@ -100,13 +124,11 @@ const EvalForm = () => {
           navigate("/dashboard");
         }
       }
-
-      // Redirect to /dashboard after successful submission
     } catch (error) {
       console.error("Error adding evaluation:", error);
     }
   };
-
+  
   return (
     <Layout>
       <div className="max-w-3xl mx-auto py-8">
@@ -138,7 +160,7 @@ const EvalForm = () => {
             <div key={index} className="mb-4">
               <label className="block text-gray-700 font-bold mb-2">{`${
                 index + 1
-              }. The activity ${label}`}</label>
+              }. ${label}`}</label>
               <div className="flex justify-between">
                 {[5, 4, 3, 2, 1].map((rating) => (
                   <span key={rating} className="inline-flex items-center mr-4">
