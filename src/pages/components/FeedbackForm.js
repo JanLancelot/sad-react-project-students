@@ -6,6 +6,7 @@ import {
   getDoc,
   updateDoc,
   arrayUnion,
+  setDoc,
 } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { useParams, useNavigate } from "react-router-dom";
@@ -90,25 +91,29 @@ const EvalForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const meetingRef = doc(db, "meetings", eventId);
-      const meetingDoc = await getDoc(meetingRef);
-
-      const evalRef = collection(meetingRef, "evaluations");
-      await addDoc(evalRef, formData);
-      // Reset form data after successful submission
-      setFormData({
-        fullName: "",
-        yearSection: "",
-        ratings: Array(10).fill(null),
-        bestFeatures: "",
-        suggestions: "",
-        otherComments: "",
-        coreValues: [],
-      });
-
       const currentUser = auth.currentUser;
       if (currentUser) {
         const userUid = currentUser.uid;
+        const meetingRef = doc(db, "meetings", eventId);
+        const meetingDoc = await getDoc(meetingRef);
+
+        const evalRef = collection(meetingRef, "evaluations");
+        const averageRating =
+          formData.ratings.filter((rating) => rating !== null).reduce((a, b) => a + b, 0) /
+          formData.ratings.filter((rating) => rating !== null).length;
+
+        await setDoc(doc(evalRef, userUid), { ...formData, averageRating });
+
+        // Reset form data after successful submission
+        setFormData({
+          fullName: "",
+          yearSection: "",
+          ratings: Array(10).fill(null),
+          bestFeatures: "",
+          suggestions: "",
+          otherComments: "",
+          coreValues: [],
+        });
 
         if (meetingDoc.data().checkedInUsers.includes(userUid)) {
           const userDocRef = doc(db, "users", userUid);
@@ -128,6 +133,7 @@ const EvalForm = () => {
       console.error("Error adding evaluation:", error);
     }
   };
+
 
   return (
     <Layout>
