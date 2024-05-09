@@ -8,6 +8,11 @@ import { auth, db } from "../../firebase";
 import { getCurrentPosition } from "./locationUtils";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import EventIcon from '@mui/icons-material/Event';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import LogoutIcon from '@mui/icons-material/Logout';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 const QRScanner = () => {
   const [scanResult, setScanResult] = useState(null);
@@ -193,18 +198,18 @@ const QRScanner = () => {
         <h1 className="text-2xl font-bold mb-4">QR Code Scanner</h1>
 
         {/* Scanner Container with Diagonal Cut */}
-        <div className="relative overflow-hidden rounded-md shadow-md mb-4">
+        <div className="border border-gray-400 rounded-md shadow-md mb-4 overflow-hidden relative">
           {isScannerActive && (
             <motion.div
-              className="border border-gray-400 rounded-md"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              className="absolute inset-0 bg-gradient-to-r from-white via-white to-transparent"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
             >
               <QrScanner
                 ref={qrRef}
                 delay={300}
-                style={previewStyle}
+                style={{ height: 240, maxWidth: "100%" }} // Adjust height as needed
                 onScan={handleScan}
                 constraints={{
                   video: {
@@ -216,9 +221,8 @@ const QRScanner = () => {
           )}
         </div>
 
-        {/* Buttons with Shadows and Hover Effects */}
         <motion.button
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg shadow-md mb-4 transform hover:scale-105 transition-transform duration-300 ease-out"
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded shadow-md mb-4 transform hover:scale-105 transition-transform duration-300 ease-in-out"
           onClick={toggleScanner}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -227,84 +231,6 @@ const QRScanner = () => {
           {isScannerActive ? "Stop Scanner" : "Start Scanner"}
         </motion.button>
 
-        {/* Event Information with Icons */}
-        {eventName && (
-          <div className="flex items-center mb-2">
-            <span className="material-icons text-gray-500 mr-2">event</span>
-            <p className="text-gray-700 font-medium">{eventName}</p>
-          </div>
-        )}
-        {eventDate && (
-          <div className="flex items-center mb-2">
-            <span className="material-icons text-gray-500 mr-2">calendar_today</span>
-            <p className="text-gray-700 font-medium">{eventDate}</p>
-          </div>
-        )}
-        {eventLatitude && eventLongitude && (
-          <div className="flex items-center mb-2">
-            <span className="material-icons text-gray-500 mr-2">location_on</span>
-            <p className="text-gray-700 font-medium">
-              Latitude: {eventLatitude}, Longitude: {eventLongitude}
-            </p>
-          </div>
-        )}
-
-        {/* Check-in/Check-out Status */}
-        {checkedIn && (
-          <motion.p
-            className="text-green-500 font-medium mb-2 flex items-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.8 }}
-          >
-            <span className="material-icons mr-2">check_circle</span>
-            Checked In
-          </motion.p>
-        )}
-        {checkedOut && (
-          <motion.p
-            className="text-green-500 font-medium mb-2 flex items-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.8 }}
-          >
-            <span className="material-icons mr-2">check_circle_outline</span>
-            Checked Out
-          </motion.p>
-        )}
-
-        {/* Error Messages with Icons */}
-        {locationError && (
-          <motion.div
-            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-            initial={{
-            opacity: 0,
-            y: 20,
-          }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 1 }}
-          >
-            <span className="material-icons text-red-500 absolute left-4 top-1/2 -translate-y-1/2">
-              error_outline
-            </span>
-            <p className="ml-10">{locationError}</p>
-          </motion.div>
-        )}
-        {dateError && (
-          <motion.div
-            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 1 }}
-          >
-            <span className="material-icons text-red-500 absolute left-4 top-1/2 -translate-y-1/2">
-              error_outline
-            </span>
-            <p className="ml-10">{dateError}</p>
-          </motion.div>
-        )}
-
-        {/* Location Distance (Optional) */}
         {displayLocation && (
           <motion.p
             className="text-gray-600 text-sm mb-4 flex items-center"
@@ -312,10 +238,95 @@ const QRScanner = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <span className="material-icons text-gray-500 mr-2">location_searching</span>
+            <LocationOnIcon className="mr-2" />
             You are {displayLocation.toFixed(2)} km away from the allowed
             location.
           </motion.p>
+        )}
+
+        {eventName && (
+          <motion.p
+            className="text-gray-700 font-medium mb-2 flex items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <EventIcon className="mr-2" />
+            Event Name: {eventName}
+          </motion.p>
+        )}
+
+        {eventDate && (
+          <motion.p
+            className="text-gray-700 font-medium mb-4 flex items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <EventIcon className="mr-2" />
+            Event Date: {eventDate}
+          </motion.p>
+        )}
+
+        {/* Optional Latitude and Longitude */}
+        {eventLatitude && eventLongitude && (
+          <motion.p
+            className="text-gray-700 font-medium mb-4 flex items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <LocationOnIcon className="mr-2" />
+            Latitude: {eventLatitude}, Longitude: {eventLongitude}
+          </motion.p>
+        )}
+
+        {checkedIn && (
+          <motion.p
+            className="text-green-500 font-medium mb-2 flex items-center" 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            <CheckCircleOutlineIcon className="mr-2" />
+            You have checked in. 
+          </motion.p> 
+        )}
+
+        {checkedOut && (
+          <motion.p
+            className="text-green-500 font-medium mb-2 flex items-center" 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            <LogoutIcon className="mr-2" />
+            You have checked out.
+          </motion.p>
+        )} 
+        
+        {locationError && (
+          <motion.div
+            className="bg-red-500 text-white p-4 rounded mb-4 flex items-center border border-red-600"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1 }}
+          >
+            <ErrorOutlineIcon className="mr-2" />
+            <p>{locationError}</p>
+          </motion.div>
+        )}
+
+        {dateError && (
+          <motion.div
+            className="bg-red-500 text-white p-4 rounded mb-4 flex items-center border border-red-600"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1 }}
+          >
+            <ErrorOutlineIcon className="mr-2" />
+            <p>{dateError}</p>
+          </motion.div>
         )}
       </div>
     </div>
