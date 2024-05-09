@@ -39,6 +39,8 @@ const EvalForm = () => {
     coreValues: [],
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (name.startsWith("ratings")) {
@@ -90,6 +92,8 @@ const EvalForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
     try {
       const currentUser = auth.currentUser;
       if (currentUser) {
@@ -99,41 +103,53 @@ const EvalForm = () => {
 
         const evalRef = collection(meetingRef, "evaluations");
         const averageRating =
-          formData.ratings.filter((rating) => rating !== null).reduce((a, b) => a + b, 0) /
+          formData.ratings
+            .filter((rating) => rating !== null)
+            .reduce((a, b) => a + b, 0) /
           formData.ratings.filter((rating) => rating !== null).length;
 
-        await setDoc(doc(evalRef, userUid), { ...formData, averageRating });
+        // Check if all questions are answered
+        const allQuestionsAnswered = formData.ratings.every(
+          (rating) => rating !== null
+        );
 
-        // Reset form data after successful submission
-        setFormData({
-          fullName: "",
-          yearSection: "",
-          ratings: Array(10).fill(null),
-          bestFeatures: "",
-          suggestions: "",
-          otherComments: "",
-          coreValues: [],
-        });
+        if (allQuestionsAnswered) {
+          await setDoc(doc(evalRef, userUid), { ...formData, averageRating });
 
-        if (meetingDoc.data().checkedInUsers.includes(userUid)) {
-          const userDocRef = doc(db, "users", userUid);
-          await updateDoc(userDocRef, {
-            eventsAttended: arrayUnion(eventId),
+          // Reset form data after successful submission
+          setFormData({
+            fullName: "",
+            yearSection: "",
+            ratings: Array(10).fill(null),
+            bestFeatures: "",
+            suggestions: "",
+            otherComments: "",
+            coreValues: [],
           });
-          await updateDoc(meetingRef, {
-            attendees: arrayUnion(userUid),
-          });
-          console.log(
-            "Event added to eventsAttended and attendees arrays successfully."
-          );
-          navigate("/dashboard");
+
+          if (meetingDoc.data().checkedInUsers.includes(userUid)) {
+            const userDocRef = doc(db, "users", userUid);
+            await updateDoc(userDocRef, {
+              eventsAttended: arrayUnion(eventId),
+            });
+            await updateDoc(meetingRef, {
+              attendees: arrayUnion(userUid),
+            });
+            console.log(
+              "Event added to eventsAttended and attendees arrays successfully."
+            );
+            navigate("/dashboard");
+          }
+        } else {
+          alert("Please answer all questions before submitting.");
         }
       }
     } catch (error) {
       console.error("Error adding evaluation:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
 
   return (
     <Layout>
@@ -162,7 +178,10 @@ const EvalForm = () => {
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             />
           </div>
-          <div className="mb-4"><b>LEGEND</b>:	Excellent <b>( 5 )</b>	Very Good <b>( 4 )</b>	Good <b>( 3 )</b>	Needs Improvement <b>( 2 )</b> Poor <b>( 1 )</b></div>
+          <div className="mb-4">
+            <b>LEGEND</b>: Excellent <b>( 5 )</b> Very Good <b>( 4 )</b> Good{" "}
+            <b>( 3 )</b> Needs Improvement <b>( 2 )</b> Poor <b>( 1 )</b>
+          </div>
           {ratingLabels.map((label, index) => (
             <div key={index} className="mb-4">
               <label className="block text-gray-700 font-bold mb-2">{`${
@@ -308,10 +327,10 @@ const EvalForm = () => {
           <div className="flex items-center justify-between">
             <button
               type="submit"
-              onClick={handleSubmit}
+              disabled={isSubmitting}
               className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             >
-              Submit
+              {isSubmitting ? "Submitting..." : "Submit"}
             </button>
           </div>
         </form>
