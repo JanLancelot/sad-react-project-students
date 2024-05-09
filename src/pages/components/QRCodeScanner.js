@@ -251,16 +251,6 @@ const QRScanner = () => {
             Event Date: {eventDate}
           </motion.p>
         )}
-        {eventLatitude && eventLongitude && (
-          <motion.p
-            className="text-gray-700 font-medium mb-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-          >
-            Event Latitude: {eventLatitude}, Event Longitude: {eventLongitude}
-          </motion.p>
-        )}
         {checkedIn && (
           <motion.p
             className="text-green-500 font-medium mb-2"
