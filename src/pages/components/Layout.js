@@ -23,6 +23,7 @@ import {
   UsersIcon,
   StudentIcon,
   XMarkIcon,
+  CameraIcon
 } from "@heroicons/react/24/outline";
 import {
   ChevronDownIcon,
@@ -31,21 +32,38 @@ import {
 
 const navigation = [
   {
-    name: "Dashboard",
+    name: "QR-Code Scanner",
     href: "/dashboard",
-    icon: HomeIcon,
-    current: window.location.pathname === "/",
+    icon: CameraIcon,
+    current: false,
+    path: "/dashboard",
   },
   {
     name: "Calendar",
     href: "/calendar",
     icon: CalendarIcon,
-    current: window.location.pathname === "/calendar",
+    current: false,
+    path: "/calendar",
   },
 ];
 
 function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
+  const currentPath = window.location.pathname;
+  return classes
+    .filter(Boolean)
+    .map((cls) => {
+      if (cls.includes("bg-gray-800")) {
+        const navItem = navigation.find((item) => item.path === currentPath);
+        if (navItem) {
+          return cls.replace(
+            "bg-gray-800",
+            "bg-gray-800 transition-colors duration-500"
+          );
+        }
+      }
+      return cls;
+    })
+    .join(" ");
 }
 
 export default function Layout({ children }) {
@@ -208,7 +226,7 @@ export default function Layout({ children }) {
                                 <a
                                   href={item.href}
                                   className={classNames(
-                                    item.current
+                                    item.path === window.location.pathname
                                       ? "bg-gray-800 text-white"
                                       : "text-gray-400 hover:text-white hover:bg-gray-800",
                                     "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold"
@@ -223,18 +241,6 @@ export default function Layout({ children }) {
                               </li>
                             ))}
                           </ul>
-                        </li>
-                        <li className="mt-auto">
-                          <a
-                            href="#"
-                            className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-400 hover:bg-gray-800 hover:text-white"
-                          >
-                            <Cog6ToothIcon
-                              className="h-6 w-6 shrink-0"
-                              aria-hidden="true"
-                            />
-                            Settings
-                          </a>
                         </li>
                       </ul>
                     </nav>
@@ -265,7 +271,7 @@ export default function Layout({ children }) {
                         <a
                           href={item.href}
                           className={classNames(
-                            item.current
+                            item.path === window.location.pathname
                               ? "bg-gray-800 text-white"
                               : "text-gray-400 hover:text-white hover:bg-gray-800",
                             "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold"
@@ -280,18 +286,6 @@ export default function Layout({ children }) {
                       </li>
                     ))}
                   </ul>
-                </li>
-                <li className="mt-auto">
-                  <a
-                    href="#"
-                    className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-400 hover:bg-gray-800 hover:text-white"
-                  >
-                    <Cog6ToothIcon
-                      className="h-6 w-6 shrink-0"
-                      aria-hidden="true"
-                    />
-                    Settings
-                  </a>
                 </li>
               </ul>
             </nav>
