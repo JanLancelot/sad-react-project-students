@@ -150,7 +150,7 @@ const QRScanner = () => {
       const allowedLocation = {
         latitude: eventLatitude,
         longitude: eventLongitude,
-        radius: 1, // Radius in kilometers
+        radius: 0.05, // Radius in kilometers
       };
 
       const distance = calculateDistance(
