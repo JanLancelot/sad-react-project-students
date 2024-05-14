@@ -136,6 +136,14 @@ export default function EventDetails() {
     });
   };
 
+  function convertTo12Hour(time) {
+    if (!time) return '';  // Return an empty string if time is undefined or null
+    const [hours, minutes] = time.split(':');
+    const period = +hours < 12 ? 'AM' : 'PM';
+    const hour = +hours % 12 || 12;
+    return `${hour}:${minutes} ${period}`;
+  }
+
   return (
     <Layout>
       <div className="max-w-3xl mx-auto py-12 px-6 sm:px-8 lg:px-10">
@@ -177,7 +185,7 @@ export default function EventDetails() {
               <div>
                 <h2 className="text-lg font-medium text-gray-900 mb-1">Time</h2>
                 <p className="text-gray-500">
-                  {formatTime(eventData.time)}
+                  {convertTo12Hour(eventData.startTime)} - {convertTo12Hour(eventData.endTime)}
                 </p>
               </div>
             </div>

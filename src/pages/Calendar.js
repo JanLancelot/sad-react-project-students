@@ -195,12 +195,11 @@ export default function Calendar() {
   const days = generateDays();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortByDate, setSortByDate] = useState("asc"); // "asc" or "desc"
+  const [sortByDate, setSortByDate] = useState("asc"); 
 
-  // Filter events based on search and sort
   const filteredEvents = retrievedMeetings
     .filter((meeting) => {
-      if (!selectedDate) return true; // If no date is selected, show all events
+      if (!selectedDate) return true;
 
       const meetingDate = new Date(meeting.date);
       return (
@@ -221,6 +220,14 @@ export default function Calendar() {
         return dateB - dateA;
       }
     });
+
+    function convertTo12Hour(time) {
+      if (!time) return '';  // Return an empty string if time is undefined or null
+      const [hours, minutes] = time.split(':');
+      const period = +hours < 12 ? 'AM' : 'PM';
+      const hour = +hours % 12 || 12;
+      return `${hour}:${minutes} ${period}`;
+    }
 
   return (
     <Layout>
@@ -368,10 +375,7 @@ export default function Calendar() {
                           />
                         </dt>
                         <dd>
-                          <time dateTime={meeting.datetime}>
-                            {meeting.date} at ({meeting.startTime} -{" "}
-                            {meeting.endTime})
-                          </time>
+                          <time dateTime={meeting.datetime}>{meeting.date} at {convertTo12Hour(meeting.startTime)} - {convertTo12Hour(meeting.endTime)}</time>
                         </dd>
                       </div>
                       <div className="mt-2 flex items-start space-x-3 xl:ml-3.5 xl:mt-0 xl:border-l xl:border-gray-400 xl:border-opacity-50 xl:pl-3.5">
