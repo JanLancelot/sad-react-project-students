@@ -199,7 +199,10 @@ const EvalForm = () => {
                 }. ${label}`}</label>
                 <div className="flex justify-between">
                   {[5, 4, 3, 2, 1].map((rating) => (
-                    <span key={rating} className="inline-flex items-center mr-4">
+                    <span
+                      key={rating}
+                      className="inline-flex items-center mr-4"
+                    >
                       <input
                         type="radio"
                         name={`ratings[${index}]`}
@@ -214,17 +217,18 @@ const EvalForm = () => {
                 </div>
               </div>
             ))}
-            {formConfig.essayQuestions && formConfig.essayQuestions.map((question, index) => (
-              <div key={index} className="mb-4">
-                <textarea
-                  name={`essayAnswers[${index}]`}
-                  placeholder={question}
-                  value={formData.essayAnswers[index] || ""}
-                  onChange={handleChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-            ))}
+            {formConfig.essayQuestions &&
+              formConfig.essayQuestions.map((question, index) => (
+                <div key={index} className="mb-4">
+                  <textarea
+                    name={`essayAnswers[${index}]`}
+                    placeholder={question}
+                    value={formData.essayAnswers[index] || ""}
+                    onChange={handleChange}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </div>
+              ))}
             <div className="mb-6">
               <label className="block text-gray-700 font-bold mb-2">
                 CORE VALUE APPLIED
@@ -268,6 +272,6 @@ const EvalForm = () => {
       </div>
     </Layout>
   );
- };
- 
- export default EvalForm;
+};
+
+export default EvalForm;
