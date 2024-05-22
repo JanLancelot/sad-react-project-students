@@ -109,33 +109,31 @@ const EvalForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-
+  
     try {
       const currentUser = auth.currentUser;
       if (currentUser) {
         const userUid = currentUser.uid;
         const meetingRef = doc(db, "meetings", eventId);
         const meetingDoc = await getDoc(meetingRef);
-
+  
         const evalRef = collection(meetingRef, "evaluations");
         const averageRating =
           formData.ratings
             .filter((rating) => rating !== null)
             .reduce((a, b) => a + b, 0) /
           formData.ratings.filter((rating) => rating !== null).length;
-
-        // Check if all questions are answered
-        // const allQuestionsAnswered = formData.ratings.every(
-        //   (rating) => rating !== null
-        // );
-
+  
         const allQuestionsAnswered =
           formData.ratings.every((rating) => typeof rating === "number") &&
           formData.essayAnswers.every((answer) => answer.trim() !== "");
-
+  
         if (allQuestionsAnswered) {
-          await setDoc(doc(evalRef, userUid), { ...formData, averageRating });
-
+          await setDoc(doc(evalRef, userUid), {
+            ...formData,
+            averageRating,
+          });
+  
           // Reset form data after successful submission
           setFormData({
             fullName: "",
@@ -144,7 +142,7 @@ const EvalForm = () => {
             essayAnswers: [],
             coreValues: [],
           });
-
+  
           if (meetingDoc.data().checkedInUsers.includes(userUid)) {
             const userDocRef = doc(db, "users", userUid);
             await updateDoc(userDocRef, {
