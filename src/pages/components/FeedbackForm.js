@@ -83,6 +83,7 @@ const EvalForm = () => {
         }
       }
     };
+
     const fetchFormConfig = async () => {
       try {
         const formConfigCollection = collection(db, "evaluationForms");
@@ -129,9 +130,7 @@ const EvalForm = () => {
             fullName: "",
             yearSection: "",
             ratings: Array(10).fill(null),
-            bestFeatures: "",
-            suggestions: "",
-            otherComments: "",
+            essayAnswers: [],
             coreValues: [],
           });
 
@@ -164,107 +163,111 @@ const EvalForm = () => {
   return (
     <Layout>
       <div className="max-w-3xl mx-auto py-8">
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
-        >
-          <div className="mb-4">
-            <input
-              type="text"
-              name="fullName"
-              placeholder="Name of Participant"
-              value={formData.fullName}
-              disabled
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
-          <div className="mb-4">
-            <input
-              type="text"
-              name="yearSection"
-              placeholder="Course and Year"
-              value={formData.yearSection}
-              disabled
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
-          <div className="mb-4">
-            <b>LEGEND</b>: Excellent <b>( 5 )</b> Very Good <b>( 4 )</b> Good{" "}
-            <b>( 3 )</b> Needs Improvement <b>( 2 )</b> Poor <b>( 1 )</b>
-          </div>
-          {ratingLabels.map((label, index) => (
-            <div key={index} className="mb-4">
-              <label className="block text-gray-700 font-bold mb-2">{`${
-                index + 1
-              }. ${label}`}</label>
-              <div className="flex justify-between">
-                {[5, 4, 3, 2, 1].map((rating) => (
-                  <span key={rating} className="inline-flex items-center mr-4">
-                    <input
-                      type="radio"
-                      name={`ratings[${index}]`}
-                      value={rating}
-                      checked={formData.ratings[index] === rating}
-                      onChange={handleChange}
-                      className="form-radio h-5 w-5 text-indigo-600"
-                    />
-                    <span className="ml-2 text-gray-700">{rating}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-          {formConfig.essayQuestions.map((question, index) => (
-            <div key={index} className="mb-4">
-              <textarea
-                name={`essayAnswers[${index}]`}
-                placeholder={question}
-                value={formData.essayAnswers[index] || ""}
-                onChange={handleChange}
+        {formConfig ? (
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+          >
+            <div className="mb-4">
+              <input
+                type="text"
+                name="fullName"
+                placeholder="Name of Participant"
+                value={formData.fullName}
+                disabled
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               />
             </div>
-          ))}
-          <div className="mb-6">
-            <label className="block text-gray-700 font-bold mb-2">
-              CORE VALUE APPLIED
-            </label>
-            <div className="flex flex-wrap">
-              {formConfig &&
-                formConfig.values.map((value, index) => (
-                  <div key={index} className="mr-4 mb-2">
-                    <input
-                      type="checkbox"
-                      name="coreValues"
-                      value={value}
-                      checked={formData.coreValues.includes(value)}
-                      onChange={handleChange}
-                      id={`value-${index}`}
-                      className="form-checkbox h-4 w-4 text-indigo-600"
-                    />
-                    <label
-                      htmlFor={`value-${index}`}
-                      className="ml-2 text-gray-700"
-                    >
-                      {value}
-                    </label>
-                  </div>
-                ))}
+            <div className="mb-4">
+              <input
+                type="text"
+                name="yearSection"
+                placeholder="Course and Year"
+                value={formData.yearSection}
+                disabled
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
             </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-            >
-              {isSubmitting ? "Submitting..." : "Submit"}
-            </button>
-          </div>
-        </form>
+            <div className="mb-4">
+              <b>LEGEND</b>: Excellent <b>( 5 )</b> Very Good <b>( 4 )</b> Good{" "}
+              <b>( 3 )</b> Needs Improvement <b>( 2 )</b> Poor <b>( 1 )</b>
+            </div>
+            {ratingLabels.map((label, index) => (
+              <div key={index} className="mb-4">
+                <label className="block text-gray-700 font-bold mb-2">{`${
+                  index + 1
+                }. ${label}`}</label>
+                <div className="flex justify-between">
+                  {[5, 4, 3, 2, 1].map((rating) => (
+                    <span key={rating} className="inline-flex items-center mr-4">
+                      <input
+                        type="radio"
+                        name={`ratings[${index}]`}
+                        value={rating}
+                        checked={formData.ratings[index] === rating}
+                        onChange={handleChange}
+                        className="form-radio h-5 w-5 text-indigo-600"
+                      />
+                      <span className="ml-2 text-gray-700">{rating}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {formConfig.essayQuestions && formConfig.essayQuestions.map((question, index) => (
+              <div key={index} className="mb-4">
+                <textarea
+                  name={`essayAnswers[${index}]`}
+                  placeholder={question}
+                  value={formData.essayAnswers[index] || ""}
+                  onChange={handleChange}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
+            ))}
+            <div className="mb-6">
+              <label className="block text-gray-700 font-bold mb-2">
+                CORE VALUE APPLIED
+              </label>
+              <div className="flex flex-wrap">
+                {formConfig &&
+                  formConfig.values.map((value, index) => (
+                    <div key={index} className="mr-4 mb-2">
+                      <input
+                        type="checkbox"
+                        name="coreValues"
+                        value={value}
+                        checked={formData.coreValues.includes(value)}
+                        onChange={handleChange}
+                        id={`value-${index}`}
+                        className="form-checkbox h-4 w-4 text-indigo-600"
+                      />
+                      <label
+                        htmlFor={`value-${index}`}
+                        className="ml-2 text-gray-700"
+                      >
+                        {value}
+                      </label>
+                    </div>
+                  ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              >
+                {isSubmitting ? "Submitting..." : "Submit"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div>Loading form configuration...</div>
+        )}
       </div>
     </Layout>
   );
-};
-
-export default EvalForm;
+ };
+ 
+ export default EvalForm;
