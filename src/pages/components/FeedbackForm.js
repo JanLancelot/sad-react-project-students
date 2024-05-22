@@ -125,8 +125,7 @@ const EvalForm = () => {
           formData.ratings.filter((rating) => rating !== null).length;
   
         const allQuestionsAnswered =
-          formData.ratings.every((rating) => typeof rating === "number") &&
-          formData.essayAnswers.every((answer) => answer.trim() !== "");
+          formData.ratings.every((rating) => typeof rating === "number");
   
         if (allQuestionsAnswered) {
           await setDoc(doc(evalRef, userUid), {
