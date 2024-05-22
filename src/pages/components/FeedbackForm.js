@@ -91,11 +91,14 @@ const EvalForm = () => {
         const formConfigData = formConfigSnapshot.docs[0].data();
         setFormConfig(formConfigData);
 
-        // Update the ratings array with the correct number of null values
+        // Update the ratings and essayAnswers arrays with the correct number of values
         const numRatings = formConfigData.questions.length;
+        const numEssayQuestions = formConfigData.essayQuestions.length;
+
         setFormData((prevData) => ({
           ...prevData,
           ratings: Array(numRatings).fill(null),
+          essayAnswers: Array(numEssayQuestions).fill(""),
         }));
       } catch (error) {
         console.error("Error fetching form config:", error);
@@ -109,30 +112,30 @@ const EvalForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-  
+
     try {
       const currentUser = auth.currentUser;
       if (currentUser) {
         const userUid = currentUser.uid;
         const meetingRef = doc(db, "meetings", eventId);
         const meetingDoc = await getDoc(meetingRef);
-  
+
         const evalRef = collection(meetingRef, "evaluations");
         const averageRating =
           formData.ratings
             .filter((rating) => rating !== null)
             .reduce((a, b) => a + b, 0) /
           formData.ratings.filter((rating) => rating !== null).length;
-  
+
         const allQuestionsAnswered =
           formData.ratings.every((rating) => typeof rating === "number");
-  
+
         if (allQuestionsAnswered) {
           await setDoc(doc(evalRef, userUid), {
             ...formData,
             averageRating,
           });
-  
+
           // Reset form data after successful submission
           setFormData({
             fullName: "",
@@ -141,7 +144,7 @@ const EvalForm = () => {
             essayAnswers: [],
             coreValues: [],
           });
-  
+
           if (meetingDoc.data().checkedInUsers.includes(userUid)) {
             const userDocRef = doc(db, "users", userUid);
             await updateDoc(userDocRef, {
@@ -231,7 +234,7 @@ const EvalForm = () => {
                   <textarea
                     name={`essayAnswers[${index}]`}
                     placeholder={question}
-                    value={formData.essayAnswers[index]}
+                    value={formData.essayAnswers[index] || ""}
                     onChange={handleChange}
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   />
