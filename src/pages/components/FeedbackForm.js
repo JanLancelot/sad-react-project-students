@@ -118,9 +118,11 @@ const EvalForm = () => {
           formData.ratings.filter((rating) => rating !== null).length;
 
         // Check if all questions are answered
-        const allQuestionsAnswered = formData.ratings.every(
-          (rating) => rating !== null
-        );
+        // const allQuestionsAnswered = formData.ratings.every(
+        //   (rating) => rating !== null
+        // );
+
+        const allQuestionsAnswered = true;
 
         if (allQuestionsAnswered) {
           await setDoc(doc(evalRef, userUid), { ...formData, averageRating });
