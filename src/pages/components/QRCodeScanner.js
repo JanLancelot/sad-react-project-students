@@ -7,7 +7,7 @@ import { doc, updateDoc, getDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { getCurrentPosition } from "./locationUtils";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
+import { useNavigate } from "react-router-dom";
 
 const QRScanner = () => {
   const [scanResult, setScanResult] = useState(null);
@@ -26,11 +26,11 @@ const QRScanner = () => {
 
   const qrRef = useRef(null);
 
-  const navigate = useNavigate(); // Initialize the navigate function
+  const navigate = useNavigate(); 
 
   const handleScan = async (result) => {
     if (result) {
-      setIsScannerActive(false); // Stop the scanner after a successful scan
+      setIsScannerActive(false); 
 
       const [eventId, type] = result.text.split("-");
       const meetingDocRef = doc(db, "meetings", eventId);
@@ -53,6 +53,7 @@ const QRScanner = () => {
           eventLatitude,
           eventLongitude
         );
+
         if (!isAllowedLocation) {
           setLocationError(
             "You are not in the allowed location to scan this QR code."

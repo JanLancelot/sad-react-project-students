@@ -7,6 +7,7 @@ import {
   updateDoc,
   arrayUnion,
   setDoc,
+  getDocs,
 } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { useParams, useNavigate } from "react-router-dom";
@@ -16,29 +17,15 @@ const EvalForm = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
 
-  const ratingLabels = [
-    "The activity was in-line with the DYCI Vision-Mission and core values",
-    "The activity achieved its goals/objectives (or theme)",
-    "The activity met the needs of the students",
-    "The committees performed their service",
-    "The activity was well-participated by the students",
-    "The date and time was appropriate for the activity",
-    "The venue was appropriate for the activity",
-    "The school resources were properly managed",
-    "The activity was well organized and well planned",
-    "The activity was well attended by the participants",
-  ];
-
   const [formData, setFormData] = useState({
     fullName: "",
     yearSection: "",
     ratings: Array(10).fill(null),
-    bestFeatures: "",
-    suggestions: "",
-    otherComments: "",
+    essayAnswers: [],
     coreValues: [],
   });
 
+  const [formConfig, setFormConfig] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
@@ -51,6 +38,16 @@ const EvalForm = () => {
         ...prevData,
         ratings: prevData.ratings.map((rating, index) =>
           index === ratingIndex ? parseInt(value) : rating
+        ),
+      }));
+    } else if (name.startsWith("essayAnswers")) {
+      const essayIndex = parseInt(
+        name.replace("essayAnswers[", "").replace("]", "")
+      );
+      setFormData((prevData) => ({
+        ...prevData,
+        essayAnswers: prevData.essayAnswers.map((answer, index) =>
+          index === essayIndex ? value : answer
         ),
       }));
     } else {
@@ -86,8 +83,19 @@ const EvalForm = () => {
         }
       }
     };
+    const fetchFormConfig = async () => {
+      try {
+        const formConfigCollection = collection(db, "evaluationForms");
+        const formConfigSnapshot = await getDocs(formConfigCollection);
+        const formConfigData = formConfigSnapshot.docs[0].data();
+        setFormConfig(formConfigData);
+      } catch (error) {
+        console.error("Error fetching form config:", error);
+      }
+    };
 
     fetchUserData();
+    fetchFormConfig();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -151,6 +159,8 @@ const EvalForm = () => {
     }
   };
 
+  const ratingLabels = formConfig ? formConfig.questions : [];
+
   return (
     <Layout>
       <div className="max-w-3xl mx-auto py-8">
@@ -204,124 +214,42 @@ const EvalForm = () => {
               </div>
             </div>
           ))}
-          <div className="mb-4">
-            <textarea
-              name="bestFeatures"
-              placeholder="A. Best features of the activity and good values promoted and inculcated."
-              value={formData.bestFeatures}
-              onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
-          <div className="mb-4">
-            <textarea
-              name="suggestions"
-              placeholder="B. Suggestions for further improvements of the activity."
-              value={formData.suggestions}
-              onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
-          <div className="mb-4">
-            <textarea
-              name="otherComments"
-              placeholder="C. Other comments and reaction."
-              value={formData.otherComments}
-              onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
+          {formConfig.essayQuestions.map((question, index) => (
+            <div key={index} className="mb-4">
+              <textarea
+                name={`essayAnswers[${index}]`}
+                placeholder={question}
+                value={formData.essayAnswers[index] || ""}
+                onChange={handleChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
+          ))}
           <div className="mb-6">
             <label className="block text-gray-700 font-bold mb-2">
               CORE VALUE APPLIED
             </label>
             <div className="flex flex-wrap">
-              <div className="mr-4 mb-2">
-                <input
-                  type="checkbox"
-                  name="coreValues"
-                  value="CARITAS(Charity)"
-                  checked={formData.coreValues.includes("CARITAS(Charity)")}
-                  onChange={handleChange}
-                  id="caritas"
-                  className="form-checkbox h-4 w-4 text-indigo-600"
-                />
-                <label htmlFor="caritas" className="ml-2 text-gray-700">
-                  CARITAS (Charity)
-                </label>
-              </div>
-              <div className="mr-4 mb-2">
-                <input
-                  type="checkbox"
-                  name="coreValues"
-                  value="SAPIENTIA(Wisdom)"
-                  checked={formData.coreValues.includes("SAPIENTIA(Wisdom)")}
-                  onChange={handleChange}
-                  id="sapientia"
-                  className="form-checkbox h-4 w-4 text-indigo-600"
-                />
-                <label htmlFor="sapientia" className="ml-2 text-gray-700">
-                  SAPIENTIA (Wisdom)
-                </label>
-              </div>
-              <div className="mr-4 mb-2">
-                <input
-                  type="checkbox"
-                  name="coreValues"
-                  value="VERITAS(Truth)"
-                  checked={formData.coreValues.includes("VERITAS(Truth)")}
-                  onChange={handleChange}
-                  id="veritas"
-                  className="form-checkbox h-4 w-4 text-indigo-600"
-                />
-                <label htmlFor="veritas" className="ml-2 text-gray-700">
-                  VERITAS (Truth)
-                </label>
-              </div>
-              <div className="mr-4 mb-2">
-                <input
-                  type="checkbox"
-                  name="coreValues"
-                  value="PATRIA(Patriotism)"
-                  checked={formData.coreValues.includes("PATRIA(Patriotism)")}
-                  onChange={handleChange}
-                  id="patria"
-                  className="form-checkbox h-4 w-4 text-indigo-600"
-                />
-                <label htmlFor="patria" className="ml-2 text-gray-700">
-                  PATRIA (Patriotism)
-                </label>
-              </div>
-              <div className="mr-4 mb-2">
-                <input
-                  type="checkbox"
-                  name="coreValues"
-                  value="EXCELLENTIA(Excellence)"
-                  checked={formData.coreValues.includes(
-                    "EXCELLENTIA(Excellence)"
-                  )}
-                  onChange={handleChange}
-                  id="excellentia"
-                  className="form-checkbox h-4 w-4 text-indigo-600"
-                />
-                <label htmlFor="excellentia" className="ml-2 text-gray-700">
-                  EXCELLENTIA (Excellence)
-                </label>
-              </div>
-              <div className="mr-4 mb-2">
-                <input
-                  type="checkbox"
-                  name="coreValues"
-                  value="FIDES(Faith)"
-                  checked={formData.coreValues.includes("FIDES(Faith)")}
-                  onChange={handleChange}
-                  id="fides"
-                  className="form-checkbox h-4 w-4 text-indigo-600"
-                />
-                <label htmlFor="fides" className="ml-2 text-gray-700">
-                  FIDES (Faith)
-                </label>
-              </div>
+              {formConfig &&
+                formConfig.values.map((value, index) => (
+                  <div key={index} className="mr-4 mb-2">
+                    <input
+                      type="checkbox"
+                      name="coreValues"
+                      value={value}
+                      checked={formData.coreValues.includes(value)}
+                      onChange={handleChange}
+                      id={`value-${index}`}
+                      className="form-checkbox h-4 w-4 text-indigo-600"
+                    />
+                    <label
+                      htmlFor={`value-${index}`}
+                      className="ml-2 text-gray-700"
+                    >
+                      {value}
+                    </label>
+                  </div>
+                ))}
             </div>
           </div>
           <div className="flex items-center justify-between">
