@@ -20,7 +20,7 @@ const EvalForm = () => {
   const [formData, setFormData] = useState({
     fullName: "",
     yearSection: "",
-    ratings: Array(10).fill(null),
+    ratings: [],
     essayAnswers: [],
     coreValues: [],
   });
@@ -90,6 +90,13 @@ const EvalForm = () => {
         const formConfigSnapshot = await getDocs(formConfigCollection);
         const formConfigData = formConfigSnapshot.docs[0].data();
         setFormConfig(formConfigData);
+
+        // Update the ratings array with the correct number of null values
+        const numRatings = formConfigData.questions.length;
+        setFormData((prevData) => ({
+          ...prevData,
+          ratings: Array(numRatings).fill(null),
+        }));
       } catch (error) {
         console.error("Error fetching form config:", error);
       }
@@ -122,7 +129,9 @@ const EvalForm = () => {
         //   (rating) => rating !== null
         // );
 
-        const allQuestionsAnswered = true;
+        const allQuestionsAnswered =
+          formData.ratings.every((rating) => typeof rating === "number") &&
+          formData.essayAnswers.every((answer) => answer.trim() !== "");
 
         if (allQuestionsAnswered) {
           await setDoc(doc(evalRef, userUid), { ...formData, averageRating });
