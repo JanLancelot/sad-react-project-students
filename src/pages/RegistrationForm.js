@@ -58,7 +58,7 @@ const RegistrationForm = () => {
       // Update event's interestedCount and interestedUsers
       const eventDocRef = doc(db, "meetings", eventId);
       await updateDoc(eventDocRef, {
-        interestedCount: increment,
+        interestedCount: increment(1),
         interestedUsers: arrayUnion(currentUser.uid),
       });
 
