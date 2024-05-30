@@ -58,13 +58,15 @@ const RegistrationForm = () => {
       // Update event's interestedCount and interestedUsers
       const eventDocRef = doc(db, "meetings", eventId);
       await updateDoc(eventDocRef, {
+        registeredUsers: arrayUnion(currentUser.uid),
         interestedCount: increment(1),
         interestedUsers: arrayUnion(currentUser.uid),
       });
 
       await addDoc(collection(db, "registrationResponses"), {
-        eventId,
-        responses,
+        eventId: eventId,
+        userId: currentUser.uid,
+        responses: responses, 
       });
 
       toast.success("Registration successful!");

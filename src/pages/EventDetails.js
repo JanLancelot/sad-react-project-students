@@ -125,13 +125,13 @@ export default function EventDetails() {
     try {
       const eventDocRef = doc(db, "meetings", eventId);
       await updateDoc(eventDocRef, {
-        notInterestedCount: increment,
+        notInterestedCount: increment(1),
         notInterestedUsers: arrayUnion(currentUser.uid),
         interestedUsers: arrayRemove(currentUser.uid),
       });
       setEventData((prevEventData) => ({
         ...prevEventData,
-        notInterestedCount: increment,
+        notInterestedCount: increment(1),
         notInterestedUsers: [
           ...prevEventData.notInterestedUsers,
           currentUser.uid,
