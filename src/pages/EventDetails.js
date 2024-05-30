@@ -1,5 +1,5 @@
-import { useParams, Link } from "react-router-dom";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { doc, getDoc, updateDoc, arrayUnion, increment, arrayRemove } from "firebase/firestore";
 import { db } from "../firebase";
 import { useState, useEffect } from "react";
 import {
@@ -11,20 +11,32 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../context/AuthContext";
 import Layout from "./components/Layout";
+import { toast } from "react-toastify";
 
 export default function EventDetails() {
   const { eventId } = useParams();
   const [eventData, setEventData] = useState(null);
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchEventData = async () => {
-      const eventDocRef = doc(db, "meetings", eventId);
-      const eventDoc = await getDoc(eventDocRef);
-      if (eventDoc.exists()) {
-        setEventData(eventDoc.data());
+      try {
+        const eventDocRef = doc(db, "meetings", eventId);
+        const eventDoc = await getDoc(eventDocRef);
+
+        if (eventDoc.exists()) {
+          setEventData(eventDoc.data());
+        } else {
+          console.error("Event not found!");
+          toast.error("Event not found!");
+        }
+      } catch (error) {
+        console.error("Error fetching event data:", error);
+        toast.error("Error fetching event details!");
       }
     };
+
     fetchEventData();
   }, [eventId]);
 
@@ -39,107 +51,115 @@ export default function EventDetails() {
     currentUser?.uid
   );
 
-  const handleRSVP = () => {
-    window.open(eventData.rsvpLink, "_blank");
+  const handleRSVP = async () => {
+    if (!currentUser) {
+      toast.info("Please log in to register.");
+      return;
+    }
+
+    if (eventData.rsvpType === "default") {
+      try {
+        const eventDocRef = doc(db, "meetings", eventId);
+        await updateDoc(eventDocRef, {
+          registeredUsers: arrayUnion(currentUser.uid),
+          interestedCount: increment(1),
+          interestedUsers: arrayUnion(currentUser.uid),
+          notInterestedUsers: arrayRemove(currentUser.uid),
+        });
+        toast.success("Registered successfully!");
+        navigate("/calendar");
+      } catch (error) {
+        console.error("Error registering for event:", error);
+        toast.error("Error registering for event!");
+      }
+    } else if (eventData.rsvpType === "custom") {
+      navigate(`/events/${eventId}/register`);
+    }
   };
 
   const handleInterested = async () => {
-    if (hasUserInterested || !currentUser) return;
+    if (!currentUser) {
+      toast.info("Please log in to interact with events.");
+      return;
+    }
 
-    const eventDocRef = doc(db, "meetings", eventId);
+    if (hasUserInterested) {
+      return;
+    }
+
     try {
+      const eventDocRef = doc(db, "meetings", eventId);
       await updateDoc(eventDocRef, {
-        interestedCount: eventData.interestedCount
-          ? eventData.interestedCount + 1
-          : 1,
-        interestedUsers: eventData.interestedUsers
-          ? [...eventData.interestedUsers, currentUser.uid]
-          : [currentUser.uid],
-        notInterestedUsers: eventData.notInterestedUsers
-          ? eventData.notInterestedUsers.filter(
-              (uid) => uid !== currentUser.uid
-            )
-          : [],
-        notInterestedCount: eventData.notInterestedCount
-          ? eventData.notInterestedCount - 1
-          : 0,
+        interestedCount: increment(1),
+        interestedUsers: arrayUnion(currentUser.uid),
+        notInterestedUsers: arrayRemove(currentUser.uid),
       });
       setEventData((prevEventData) => ({
         ...prevEventData,
-        interestedCount: prevEventData.interestedCount
-          ? prevEventData.interestedCount + 1
-          : 1,
-        interestedUsers: prevEventData.interestedUsers
-          ? [...prevEventData.interestedUsers, currentUser.uid]
-          : [currentUser.uid],
-        notInterestedUsers: prevEventData.notInterestedUsers
-          ? prevEventData.notInterestedUsers.filter(
-              (uid) => uid !== currentUser.uid
-            )
-          : [],
-        notInterestedCount: prevEventData.notInterestedCount
-          ? prevEventData.notInterestedCount - 1
-          : 0,
+        interestedCount: increment,
+        interestedUsers: [
+          ...prevEventData.interestedUsers,
+          currentUser.uid,
+        ],
+        notInterestedUsers: prevEventData.notInterestedUsers.filter(
+          (uid) => uid !== currentUser.uid
+        ),
       }));
+      toast.success("Marked as interested!");
     } catch (error) {
-      console.error("Error updating interested count:", error);
+      console.error("Error updating interested status:", error);
+      toast.error("Error updating interested status!");
     }
   };
 
   const handleNotInterested = async () => {
-    if (hasUserNotInterested || !currentUser) return;
+    if (!currentUser) {
+      toast.info("Please log in to interact with events.");
+      return;
+    }
 
-    const eventDocRef = doc(db, "meetings", eventId);
+    if (hasUserNotInterested) {
+      return;
+    }
+
     try {
+      const eventDocRef = doc(db, "meetings", eventId);
       await updateDoc(eventDocRef, {
-        notInterestedUsers: eventData.notInterestedUsers
-          ? [...eventData.notInterestedUsers, currentUser.uid]
-          : [currentUser.uid],
-        interestedUsers: eventData.interestedUsers
-          ? eventData.interestedUsers.filter((uid) => uid !== currentUser.uid)
-          : [],
-        notInterestedCount: eventData.notInterestedCount
-          ? eventData.notInterestedCount + 1
-          : 1,
-        interestedCount: eventData.interestedCount
-          ? eventData.interestedCount - 1
-          : 0,
+        notInterestedCount: increment,
+        notInterestedUsers: arrayUnion(currentUser.uid),
+        interestedUsers: arrayRemove(currentUser.uid),
       });
       setEventData((prevEventData) => ({
         ...prevEventData,
-        notInterestedUsers: prevEventData.notInterestedUsers
-          ? [...prevEventData.notInterestedUsers, currentUser.uid]
-          : [currentUser.uid],
-        interestedUsers: prevEventData.interestedUsers
-          ? prevEventData.interestedUsers.filter(
-              (uid) => uid !== currentUser.uid
-            )
-          : [],
-        notInterestedCount: prevEventData.notInterestedCount
-          ? prevEventData.notInterestedCount + 1
-          : 1,
-        interestedCount: prevEventData.interestedCount
-          ? prevEventData.interestedCount - 1
-          : 0,
+        notInterestedCount: increment,
+        notInterestedUsers: [
+          ...prevEventData.notInterestedUsers,
+          currentUser.uid,
+        ],
+        interestedUsers: prevEventData.interestedUsers.filter(
+          (uid) => uid !== currentUser.uid
+        ),
       }));
+      toast.success("Marked as not interested!");
     } catch (error) {
-      console.error("Error updating not interested count:", error);
+      console.error("Error updating not interested status:", error);
+      toast.error("Error updating not interested status!");
     }
   };
 
   const formatTime = (time) => {
     const date = new Date(`2000-01-01T${time}`);
-    return date.toLocaleString('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
+    return date.toLocaleString("en-US", {
+      hour: "numeric",
+      minute: "numeric",
       hour12: true,
     });
   };
 
   function convertTo12Hour(time) {
-    if (!time) return '';  // Return an empty string if time is undefined or null
-    const [hours, minutes] = time.split(':');
-    const period = +hours < 12 ? 'AM' : 'PM';
+    if (!time) return "";
+    const [hours, minutes] = time.split(":");
+    const period = +hours < 12 ? "AM" : "PM";
     const hour = +hours % 12 || 12;
     return `${hour}:${minutes} ${period}`;
   }
@@ -169,11 +189,15 @@ export default function EventDetails() {
             </div>
             <div>
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-1">Cost</h2>
+                <h2 className="text-lg font-medium text-gray-900 mb-1">
+                  Cost
+                </h2>
                 <p className="text-gray-500">₱{eventData.cost}</p>
               </div>
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-1">Date</h2>
+                <h2 className="text-lg font-medium text-gray-900 mb-1">
+                  Date
+                </h2>
                 <p className="text-gray-500">{eventData.date}</p>
               </div>
               <div>
@@ -183,9 +207,12 @@ export default function EventDetails() {
                 <p className="text-gray-500">{eventData.department}</p>
               </div>
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-1">Time</h2>
+                <h2 className="text-lg font-medium text-gray-900 mb-1">
+                  Time
+                </h2>
                 <p className="text-gray-500">
-                  {convertTo12Hour(eventData.startTime)} - {convertTo12Hour(eventData.endTime)}
+                  {convertTo12Hour(eventData.startTime)} -{" "}
+                  {convertTo12Hour(eventData.endTime)}
                 </p>
               </div>
             </div>
@@ -199,7 +226,9 @@ export default function EventDetails() {
           </div>
 
           <div>
-            <h2 className="text-lg font-medium text-gray-900 mb-1">Location</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-1">
+              Location
+            </h2>
             <p className="text-gray-500">{eventData.location}</p>
           </div>
 

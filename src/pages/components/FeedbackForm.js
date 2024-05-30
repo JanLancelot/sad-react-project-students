@@ -136,7 +136,6 @@ const EvalForm = () => {
             averageRating,
           });
 
-          // Reset form data after successful submission
           setFormData({
             fullName: "",
             yearSection: "",

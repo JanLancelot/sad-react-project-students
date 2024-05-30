@@ -9,6 +9,7 @@ import NotificationsPage from "./pages/NotificationsPage";
 import FeedbackForm from "./pages/components/FeedbackForm";
 import { AuthProvider } from '../src/context/AuthContext';
 import './App.css';
+import RegistrationForm from "./pages/RegistrationForm";
 
 const router = createBrowserRouter([
   { path: '/', element: <Signin/> },
@@ -18,7 +19,8 @@ const router = createBrowserRouter([
   { path: '/calendar', element: <Calendar/> },
   { path: '/events/:eventId', element: <EventDetails/> },
   { path: '/notifications', element: <NotificationsPage/> },
-  { path: '/evalform/:eventId', element: <FeedbackForm/>}
+  { path: '/evalform/:eventId', element: <FeedbackForm/>},
+  { path: '/events/:eventId/register', element: <RegistrationForm/>}
 ]);
 
 function App() {
