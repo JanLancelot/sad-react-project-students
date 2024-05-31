@@ -44,6 +44,7 @@ export default function EventDetails() {
     return <div>Loading...</div>;
   }
 
+  const isRegistered = eventData.registeredUsers?.includes(currentUser?.uid);
   const hasUserInterested = eventData.interestedUsers?.includes(
     currentUser?.uid
   );
@@ -242,9 +243,12 @@ export default function EventDetails() {
           <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
             <button
               onClick={handleRSVP}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md flex items-center justify-center space-x-2 w-full md:w-auto"
+              className={`bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md flex items-center justify-center space-x-2 w-full md:w-auto ${
+                isRegistered || !currentUser ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={isRegistered || !currentUser}
             >
-              <span>Register</span>
+              <span>{isRegistered ? "Registered" : "Register"}</span>
               <LinkIcon className="h-5 w-5" />
             </button>
             <button
